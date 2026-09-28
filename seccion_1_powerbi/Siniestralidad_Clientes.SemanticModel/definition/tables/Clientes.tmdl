@@ -1,0 +1,100 @@
+/// Dimensión de clientes empresariales con su coordinador de cuenta vigente.
+table Clientes
+	lineageTag: c4320a6a-299d-5a3d-9fef-aba3bf81dc5f
+
+	column id_cliente
+		dataType: int64
+		isHidden
+		isKey
+		formatString: 0
+		lineageTag: 78717e4b-83c7-5efd-a724-ddab03b3f8c5
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	/// Razón social del cliente empresarial.
+	column Cliente
+		dataType: string
+		lineageTag: 66f50d5d-7c94-5ce7-bc9a-bb75e27c6fea
+		summarizeBy: none
+		sourceColumn: Cliente
+
+	column Sector
+		dataType: string
+		lineageTag: 731500ac-e17e-5ce0-aff8-80c56d37d378
+		summarizeBy: none
+		sourceColumn: Sector
+
+	column 'Clase riesgo num'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8381a277-9ad5-56d6-b11d-dfaf2388644f
+		summarizeBy: none
+		sourceColumn: Clase riesgo num
+
+	/// Clase de riesgo del cliente (1 = menor riesgo, 5 = mayor riesgo).
+	column 'Clase de riesgo'
+		dataType: string
+		lineageTag: e1ff3815-4402-5102-9eaf-d954db82073e
+		summarizeBy: none
+		sourceColumn: Clase de riesgo
+		sortByColumn: 'Clase riesgo num'
+
+	column 'Estado cliente'
+		dataType: string
+		lineageTag: 562f41b1-f562-5046-a946-789744c81e33
+		summarizeBy: none
+		sourceColumn: Estado cliente
+
+	column 'Fecha de vinculación'
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 3d1e79eb-9714-5dfd-ac77-75b0a8cd17e4
+		summarizeBy: none
+		sourceColumn: Fecha de vinculación
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Coordinador de cuenta asignado actualmente.
+	column Coordinador
+		dataType: string
+		lineageTag: ed2669b0-bb01-5c37-9b30-09f6cead49ff
+		summarizeBy: none
+		sourceColumn: Coordinador
+
+	column Regional
+		dataType: string
+		lineageTag: ea24a703-524b-58a5-b74e-5bfa4e353d85
+		summarizeBy: none
+		sourceColumn: Regional
+
+	column 'Correo coordinador'
+		dataType: string
+		isHidden
+		lineageTag: fc668f8c-97d0-5b7b-8100-522c8c2a0b03
+		summarizeBy: none
+		sourceColumn: Correo coordinador
+
+	partition Clientes = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(RutaDatos & "clientes.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    // Cultura en-US: el CSV usa punto decimal y fechas ISO
+				    Tipos = Table.TransformColumnTypes(Encabezados, {{"id_cliente", Int64.Type}, {"nombre", type text}, {"sector", type text}, {"clase_riesgo", Int64.Type}, {"estado", type text}, {"fecha_vinculacion", type date}}, "en-US"),
+				    Clase = Table.AddColumn(Tipos, "Clase de riesgo", each "Clase " & Text.From([clase_riesgo]), type text),
+				    Estado = Table.AddColumn(Clase, "Estado cliente", each Text.Proper([estado]), type text),
+				    SinEstado = Table.RemoveColumns(Estado, {"estado"}),
+				    // Coordinador vigente (asignación) + atributos del coordinador
+				    Asignacion = Table.TransformColumnTypes(Table.PromoteHeaders(Csv.Document(File.Contents(RutaDatos & "asignacion_coordinador.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true]), {{"id_cliente", Int64.Type}, {"id_coordinador", Int64.Type}}, "en-US"),
+				    Coordinadores = Table.TransformColumnTypes(Table.PromoteHeaders(Csv.Document(File.Contents(RutaDatos & "coordinadores.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true]), {{"id_coordinador", Int64.Type}}, "en-US"),
+				    ConAsignacion = Table.NestedJoin(SinEstado, {"id_cliente"}, Asignacion, {"id_cliente"}, "A", JoinKind.LeftOuter),
+				    ExpA = Table.ExpandTableColumn(ConAsignacion, "A", {"id_coordinador"}, {"id_coordinador"}),
+				    ConCoord = Table.NestedJoin(ExpA, {"id_coordinador"}, Coordinadores, {"id_coordinador"}, "C", JoinKind.LeftOuter),
+				    ExpC = Table.ExpandTableColumn(ConCoord, "C", {"nombre_coordinador", "regional", "correo"}, {"Coordinador", "Regional", "Correo coordinador"}),
+				    Paso = Table.RemoveColumns(ExpC, {"id_coordinador"}),
+				    Renombradas = Table.RenameColumns(Paso, {{"nombre", "Cliente"}, {"sector", "Sector"}, {"clase_riesgo", "Clase riesgo num"}, {"fecha_vinculacion", "Fecha de vinculación"}})
+				in
+				    Renombradas
+

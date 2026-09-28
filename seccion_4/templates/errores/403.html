@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso restringido{% endblock %}
+{% block encabezado %}Acceso restringido{% endblock %}
+{% block cuerpo %}{% if user.is_authenticated %}{{ block.super }}{% else %}
+<main class="acceso"><section class="acceso-panel error-pagina"><p class="codigo-error">403</p><h2>No tiene permiso para ver esta página</h2><p>Su rol no incluye acceso a esta sección. Si necesita acceso, solicítelo al administrador.</p><a class="btn btn-primario" href="/">Volver al inicio</a></section></main>{% endif %}{% endblock %}
+{% block contenido %}<section class="tarjeta error-pagina"><p class="codigo-error">403</p><h2>No tiene permiso para ver esta página</h2><p>Su rol no incluye acceso a esta sección. Si necesita acceso, solicítelo al administrador.</p><a class="btn btn-primario" href="/">Volver al inicio</a></section>{% endblock %}

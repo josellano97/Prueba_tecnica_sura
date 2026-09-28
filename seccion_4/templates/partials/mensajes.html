@@ -1,0 +1,11 @@
+{% if messages %}
+<div class="mensajes" role="status" aria-live="polite">
+  {% for m in messages %}
+  <div class="aviso aviso-{{ m.tags|default:'info' }}">
+    <svg class="icono" aria-hidden="true"><use href="#i-{% if m.tags == 'success' %}ok{% elif m.tags == 'error' or m.tags == 'warning' %}alerta{% else %}info{% endif %}"></use></svg>
+    <span>{{ m }}</span>
+    <button type="button" class="aviso-cerrar" data-cerrar-aviso aria-label="Cerrar mensaje">×</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

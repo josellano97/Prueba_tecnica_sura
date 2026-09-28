@@ -1,0 +1,613 @@
+table _Medidas
+	lineageTag: 97586d2c-5397-53f3-aa79-168c341415ca
+
+	/// Último día con datos (corte del día anterior a la carga).
+	measure 'Fecha corte' = MAX ( 'Info Actualizacion'[Fecha corte] )
+		formatString: dd/mm/yyyy
+		displayFolder: 0. Contexto
+		lineageTag: 0e503b34-34e3-51bd-acbd-e12cc55ef2ea
+
+	/// Primer día del mes que se analiza: el último mes dentro de los filtros, sin pasar del mes de la fecha de corte.
+	measure 'Mes de análisis' =
+			VAR _corte = [Fecha corte]
+			VAR _mesCorte = DATE ( YEAR ( _corte ), MONTH ( _corte ), 1 )
+			VAR _mes = MAX ( Calendario[Inicio mes] )
+			RETURN IF ( ISBLANK ( _mes ), BLANK (), MIN ( _mes, _mesCorte ) )
+		formatString: dd/mm/yyyy
+		displayFolder: 0. Contexto
+		lineageTag: e5d9caf4-8af1-52fd-b1db-e6eccaaf2632
+
+	/// Último día evaluado del mes de análisis (fin de mes o fecha de corte).
+	measure 'Fin mes de análisis' = MIN ( EOMONTH ( [Mes de análisis], 0 ), [Fecha corte] )
+		formatString: dd/mm/yyyy
+		displayFolder: 0. Contexto
+		lineageTag: e36837fd-50a0-55b1-b78b-e255bf4d6a13
+
+	/// 1 si el mes de análisis es el mes de la fecha de corte (datos parciales).
+	measure 'Es mes en curso' = INT ( EOMONTH ( [Mes de análisis], 0 ) > [Fecha corte] )
+		formatString: """Sí"";""Sí"";""No"""
+		displayFolder: 0. Contexto
+		lineageTag: c30cd369-638d-5075-b52d-f2c94f5e41c7
+
+	/// Etiqueta del mes analizado y contra qué se compara.
+	measure 'Texto mes de análisis' =
+			VAR _mes = [Mes de análisis]
+			VAR _ant = EDATE ( _mes, -1 )
+			VAR _etq = LOOKUPVALUE ( Calendario[Periodo], Calendario[Fecha], _mes )
+			VAR _etqAnt = LOOKUPVALUE ( Calendario[Periodo], Calendario[Fecha], _ant )
+			RETURN
+			    IF (
+			        ISBLANK ( _mes ), "Sin periodo en los filtros",
+			        IF (
+			            [Es mes en curso] = 1,
+			            "Mes de análisis: " & _etq & " (en curso, datos al " & FORMAT ( [Fecha corte], "dd/mm/yyyy", "es-CO" )
+			                & ") · se compara con el 1-" & DAY ( [Fecha corte] ) & " de " & _etqAnt,
+			            "Mes de análisis: " & _etq & " (cerrado) · se compara con " & _etqAnt
+			        )
+			    )
+		displayFolder: 0. Contexto
+		lineageTag: fc911f09-5fad-5a88-8365-e1585dcfa8a7
+
+	/// Texto de fecha de corte y actualización para la portada.
+	measure 'Texto actualización' = "Corte: " & FORMAT ( [Fecha corte], "dd/mm/yyyy", "es-CO" ) & "  ·  Actualizado: " & FORMAT ( MAX ( 'Info Actualizacion'[Fecha actualización] ), "dd/mm/yyyy hh:nn", "es-CO" )
+		displayFolder: 0. Contexto
+		lineageTag: 68f48a35-9de9-5211-8dcb-d270e73daac7
+
+	/// Resumen legible de los filtros activos (se muestra bajo el encabezado).
+	measure 'Filtros aplicados' =
+			VAR _lista = {
+			    IF ( ISFILTERED ( Clientes[Coordinador] ), "Coordinador: " & CONCATENATEX ( VALUES ( Clientes[Coordinador] ), Clientes[Coordinador], ", " ) ),
+			    IF ( ISFILTERED ( Clientes[Regional] ), "Regional: " & CONCATENATEX ( VALUES ( Clientes[Regional] ), Clientes[Regional], ", " ) ),
+			    IF ( ISFILTERED ( Clientes[Sector] ), "Sector: " & CONCATENATEX ( VALUES ( Clientes[Sector] ), Clientes[Sector], ", " ) ),
+			    IF ( ISFILTERED ( Clientes[Clase de riesgo] ), "Clase: " & CONCATENATEX ( VALUES ( Clientes[Clase de riesgo] ), Clientes[Clase de riesgo], ", " ) ),
+			    IF ( ISFILTERED ( Clientes[Estado cliente] ), "Estado cliente: " & CONCATENATEX ( VALUES ( Clientes[Estado cliente] ), Clientes[Estado cliente], ", " ) ),
+			    IF ( ISFILTERED ( Clientes[Cliente] ), "Cliente: " & IF ( COUNTROWS ( VALUES ( Clientes[Cliente] ) ) > 2, COUNTROWS ( VALUES ( Clientes[Cliente] ) ) & " seleccionados", CONCATENATEX ( VALUES ( Clientes[Cliente] ), Clientes[Cliente], ", " ) ) ),
+			    IF ( ISFILTERED ( Calendario[Año] ), "Año: " & CONCATENATEX ( VALUES ( Calendario[Año] ), Calendario[Año], ", " ) ),
+			    IF ( ISFILTERED ( Calendario[Periodo] ), "Periodo: " & CONCATENATEX ( VALUES ( Calendario[Periodo] ), Calendario[Periodo], ", ", CALCULATE ( MIN ( Calendario[Periodo orden] ) ), ASC ) ),
+			    IF ( ISFILTERED ( Casos[Tipo de caso] ), "Tipo de caso: " & CONCATENATEX ( VALUES ( Casos[Tipo de caso] ), Casos[Tipo de caso], ", " ) ),
+			    IF ( ISFILTERED ( Casos[Estado del caso] ), "Estado del caso: " & CONCATENATEX ( VALUES ( Casos[Estado del caso] ), Casos[Estado del caso], ", " ) )
+			}
+			VAR _txt = CONCATENATEX ( FILTER ( _lista, [Value] <> BLANK () ), [Value], "   |   " )
+			RETURN IF ( _txt = "", "Sin filtros aplicados: vista de todos los clientes", "Filtros aplicados → " & _txt )
+		displayFolder: 0. Contexto
+		lineageTag: 46697a93-0d76-5a67-ba72-772dbacd03d2
+
+	/// Casos válidos (se excluyen los anulados) en el contexto de filtros.
+	measure 'Total casos' = CALCULATE ( COUNTROWS ( Casos ), KEEPFILTERS ( Casos[Estado del caso] <> "Anulado" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 0c79c229-aff7-5112-84f6-4f58ea5f2359
+
+	/// Casos válidos de tipo Grave.
+	measure 'Casos graves' = CALCULATE ( [Total casos], KEEPFILTERS ( Casos[Tipo de caso] = "Grave" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 3841f726-b0b7-57eb-ac49-8318c1c96e66
+
+	/// Casos válidos de tipo Leve.
+	measure 'Casos leves' = CALCULATE ( [Total casos], KEEPFILTERS ( Casos[Tipo de caso] = "Leve" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 55b270f3-366d-546d-8fb0-8cefbe53303a
+
+	/// Participación de los casos graves en el total de casos.
+	measure '% casos graves' = DIVIDE ( [Casos graves], [Total casos] )
+		formatString: 0.0 %
+		displayFolder: 1. Casos
+		lineageTag: 63b2de6b-8612-549c-a9b5-7a3c6d76ab0f
+
+	/// Casos válidos que siguen abiertos.
+	measure 'Casos abiertos' = CALCULATE ( [Total casos], KEEPFILTERS ( Casos[Estado del caso] = "Abierto" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 07994ffd-a4b8-5982-9317-c68a4611161b
+
+	/// Casos graves que siguen abiertos (requieren seguimiento).
+	measure 'Casos graves abiertos' = CALCULATE ( [Casos graves], KEEPFILTERS ( Casos[Estado del caso] = "Abierto" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 4055eb54-36b7-5fab-a07c-9feaa3d5ef17
+
+	/// Suma de días de ausencia de los casos válidos.
+	measure 'Días de ausencia' = CALCULATE ( SUM ( Casos[Días de ausencia] ), KEEPFILTERS ( Casos[Estado del caso] <> "Anulado" ) )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 295836a9-b9fc-5942-a72c-ee7d61bbe18e
+
+	/// Costo de los casos válidos, en millones de pesos.
+	measure 'Costo total' = CALCULATE ( SUM ( Casos[Costo] ), KEEPFILTERS ( Casos[Estado del caso] <> "Anulado" ) )
+		formatString: \$ #,0,,.0 "M"
+		displayFolder: 1. Casos
+		lineageTag: 2ff3dd8c-6c7a-5493-b4d2-587a7705f226
+
+	/// Costo total / casos.
+	measure 'Costo promedio por caso' = DIVIDE ( [Costo total], [Total casos] )
+		formatString: \$ #,0,,.0 "M"
+		displayFolder: 1. Casos
+		lineageTag: f4f3e756-6c9e-5525-a394-bfa330c5500c
+
+	/// Participación de los casos graves en el costo total.
+	measure '% costo casos graves' = DIVIDE ( CALCULATE ( [Costo total], KEEPFILTERS ( Casos[Tipo de caso] = "Grave" ) ), [Costo total] )
+		formatString: 0.0 %
+		displayFolder: 1. Casos
+		lineageTag: 641dc701-9025-50ac-bcd0-6dfb60f18e7c
+
+	/// Participación de la fila en los casos de todos los clientes (Medida B de la prueba, sobre [Total casos]).
+	measure '% participación casos' = DIVIDE ( [Total casos], CALCULATE ( [Total casos], ALL ( Clientes ) ), 0 )
+		formatString: 0.0 %
+		displayFolder: 1. Casos
+		lineageTag: b2e8f107-1ede-5109-9ee7-a81fae9b0e78
+
+	/// Participación de la fila en el costo de todos los tipos de caso.
+	measure '% participación costo' = DIVIDE ( [Costo total], CALCULATE ( [Costo total], ALL ( Casos[Tipo de caso] ) ) )
+		formatString: 0.0 %
+		displayFolder: 1. Casos
+		lineageTag: 03f3ee2b-e18c-5696-9e6d-0ca7e26192cf
+
+	/// Participación de la fila en los casos de todos los tipos.
+	measure '% participación casos por tipo' = DIVIDE ( [Total casos], CALCULATE ( [Total casos], ALL ( Casos[Tipo de caso] ) ) )
+		formatString: 0.0 %
+		displayFolder: 1. Casos
+		lineageTag: 77909fee-5e10-51a4-a52d-c862f0ace0de
+
+	/// Casos acumulados desde el 1 de enero hasta la fecha del contexto (Medida A, sobre casos válidos).
+	measure 'Casos YTD' = TOTALYTD ( [Total casos], Calendario[Fecha] )
+		formatString: #,0
+		displayFolder: 1. Casos
+		lineageTag: 1dc6531b-ea63-5d9d-83c3-ef1d4650ffab
+
+	/// Costo acumulado del año.
+	measure 'Costo YTD' = TOTALYTD ( [Costo total], Calendario[Fecha] )
+		formatString: \$ #,0,,.0 "M"
+		displayFolder: 1. Casos
+		lineageTag: 90af088d-5ab8-5252-81d0-57269291e251
+
+	/// Suma de trabajadores activos facturados en los meses del contexto (denominador oficial de la tasa).
+	measure Trabajadores-mes = SUM ( Facturacion[Trabajadores activos] )
+		formatString: #,0
+		displayFolder: 2. Exposición
+		lineageTag: 3acb68af-120e-5537-97e3-1050fff0a981
+
+	/// Trabajadores activos del mes de análisis (facturación del periodo).
+	measure 'Trabajadores activos' = VAR _m = [Mes de análisis] RETURN CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), Calendario[Fecha] = _m )
+		formatString: #,0
+		displayFolder: 2. Exposición
+		lineageTag: 2b2fab34-ed5f-5954-9ef4-7e1d004b6bc7
+
+	/// Clientes facturados en el mes de análisis.
+	measure 'Clientes con facturación' = VAR _m = [Mes de análisis] RETURN CALCULATE ( DISTINCTCOUNT ( Facturacion[id_cliente] ), REMOVEFILTERS ( Calendario ), Calendario[Fecha] = _m )
+		formatString: #,0
+		displayFolder: 2. Exposición
+		lineageTag: d98a7acc-4021-53dc-9466-cf636906dccd
+
+	/// DEFINICIÓN OFICIAL: casos / trabajadores activos × 100, por mes. Para varios meses = casos / trabajadores-mes × 100 (tasa mensual promedio ponderada).
+	measure 'Tasa de incidencia' = DIVIDE ( [Total casos], [Trabajadores-mes] ) * 100
+		formatString: #,0.00
+		displayFolder: 3. Tasa de incidencia
+		lineageTag: 6a23240b-9fa5-5003-8d69-351126b7c99d
+
+	/// Casos del mes de análisis (hasta la fecha de corte si está en curso).
+	measure 'Casos mes' = CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Mes de análisis], [Fin mes de análisis] ) )
+		formatString: #,0
+		displayFolder: 4. Mes de análisis
+		lineageTag: 3f830278-5e86-5b77-bc9e-e301f5308469
+
+	/// Casos del mes anterior en un periodo comparable: completo si el mes de análisis está cerrado; mismos días transcurridos si está en curso.
+	measure 'Casos mes anterior' =
+			VAR _ini = [Mes de análisis]
+			VAR _dias = DAY ( [Fin mes de análisis] )
+			VAR _iniAnt = EDATE ( _ini, -1 )
+			VAR _finAnt = MIN ( EOMONTH ( _iniAnt, 0 ), _iniAnt + _dias - 1 )
+			VAR _hayHistoria = _iniAnt >= MINX ( ALL ( Calendario[Fecha] ), Calendario[Fecha] )
+			RETURN
+			    IF ( _hayHistoria,
+			        CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _iniAnt, _finAnt ) ) + 0
+			    )
+		formatString: #,0
+		displayFolder: 4. Mes de análisis
+		lineageTag: 4a1b7360-d524-5dc8-bb19-f49b31b7e358
+
+	/// Diferencia de casos vs el mes anterior comparable. En blanco si no hay mes anterior.
+	measure 'Var casos' = IF ( NOT ISBLANK ( [Casos mes anterior] ), [Casos mes] - [Casos mes anterior] )
+		formatString: +#,0;-#,0;0
+		displayFolder: 4. Mes de análisis
+		lineageTag: 6b332437-c165-5fbb-9d62-1958120a53bf
+
+	/// Variación porcentual de casos vs el mes anterior comparable.
+	measure 'Var % casos' = DIVIDE ( [Var casos], [Casos mes anterior] )
+		formatString: +0.0 %;-0.0 %;0.0 %
+		displayFolder: 4. Mes de análisis
+		lineageTag: f2dcccf5-7e3c-50d3-a9de-65588bec1034
+
+	/// Costo de los casos del mes de análisis.
+	measure 'Costo mes' = CALCULATE ( [Costo total], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Mes de análisis], [Fin mes de análisis] ) )
+		formatString: \$ #,0,,.0 "M"
+		displayFolder: 4. Mes de análisis
+		lineageTag: 660bf7cb-aa21-5799-8f1d-06ac4199eff7
+
+	/// Costo del mes anterior comparable.
+	measure 'Costo mes anterior' =
+			VAR _ini = [Mes de análisis]
+			VAR _dias = DAY ( [Fin mes de análisis] )
+			VAR _iniAnt = EDATE ( _ini, -1 )
+			VAR _finAnt = MIN ( EOMONTH ( _iniAnt, 0 ), _iniAnt + _dias - 1 )
+			RETURN
+			    IF ( _iniAnt >= MINX ( ALL ( Calendario[Fecha] ), Calendario[Fecha] ),
+			        CALCULATE ( [Costo total], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _iniAnt, _finAnt ) ) + 0
+			    )
+		formatString: \$ #,0,,.0 "M"
+		displayFolder: 4. Mes de análisis
+		lineageTag: d4dd1471-2b11-5223-a3ab-6195136afb68
+
+	/// Variación porcentual del costo vs el mes anterior comparable.
+	measure 'Var % costo' = DIVIDE ( [Costo mes] - [Costo mes anterior], [Costo mes anterior] )
+		formatString: +0.0 %;-0.0 %;0.0 %
+		displayFolder: 4. Mes de análisis
+		lineageTag: 2519d13a-ae16-5dbe-afd7-aa83b4f5863b
+
+	/// Tasa de incidencia del mes de análisis: casos del mes / trabajadores activos del mes × 100.
+	measure 'Tasa mes' = DIVIDE ( [Casos mes], [Trabajadores activos] ) * 100
+		formatString: #,0.00
+		displayFolder: 4. Mes de análisis
+		lineageTag: 8a5f989d-3827-5010-8e23-9a0b9911e50d
+
+	/// Tasa del mes anterior comparable (mismos días si el mes de análisis está en curso).
+	measure 'Tasa mes anterior' =
+			VAR _ant = EDATE ( [Mes de análisis], -1 )
+			VAR _trabAnt = CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), Calendario[Fecha] = _ant )
+			RETURN DIVIDE ( [Casos mes anterior], _trabAnt ) * 100
+		formatString: #,0.00
+		displayFolder: 4. Mes de análisis
+		lineageTag: ec6c4dcc-8a17-52e5-811b-2d0092852ee6
+
+	/// Diferencia de la tasa en puntos vs el mes anterior comparable.
+	measure 'Var tasa' = IF ( NOT ISBLANK ( [Tasa mes anterior] ), [Tasa mes] - [Tasa mes anterior] )
+		formatString: +#,0.00;-#,0.00;0.00
+		displayFolder: 4. Mes de análisis
+		lineageTag: 441aad62-9bbc-5152-9568-2f0ca27491e1
+
+	/// Casos graves del mes de análisis.
+	measure 'Casos graves mes' = CALCULATE ( [Casos graves], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Mes de análisis], [Fin mes de análisis] ) )
+		formatString: #,0
+		displayFolder: 4. Mes de análisis
+		lineageTag: b477ded9-5df4-5282-bba7-1ebc6e3bfbdf
+
+	/// Participación de casos graves en el mes de análisis.
+	measure '% graves mes' = DIVIDE ( [Casos graves mes], [Casos mes] )
+		formatString: 0.0 %
+		displayFolder: 4. Mes de análisis
+		lineageTag: 7d4ba5e3-0c37-50ad-8300-0dd947ee466b
+
+	/// Participación de graves en el mes anterior comparable.
+	measure '% graves mes anterior' =
+			VAR _ini = [Mes de análisis]
+			VAR _dias = DAY ( [Fin mes de análisis] )
+			VAR _iniAnt = EDATE ( _ini, -1 )
+			VAR _finAnt = MIN ( EOMONTH ( _iniAnt, 0 ), _iniAnt + _dias - 1 )
+			RETURN
+			    CALCULATE ( [% casos graves], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _iniAnt, _finAnt ) )
+		formatString: 0.0 %
+		displayFolder: 4. Mes de análisis
+		lineageTag: 9d00d9c2-9aa5-50e3-930e-3a1795ac2e96
+
+	/// Variación de casos lista para mostrar.
+	measure 'Texto var casos' =
+			VAR _v = [Var casos]
+			RETURN IF ( ISBLANK ( _v ), "Sin dato del mes anterior",
+			    IF ( _v > 0, "▲ ", IF ( _v < 0, "▼ ", "= " ) ) & FORMAT ( ABS ( _v ), "#,0", "es-CO" ) & " ("
+			        & FORMAT ( ABS ( [Var % casos] ), "0.0 %", "es-CO" ) & ") vs mes ant." )
+		displayFolder: 5. Tarjetas
+		lineageTag: 4653ff4d-11db-5939-bcea-c307d224f765
+
+	/// Variación de costo lista para mostrar.
+	measure 'Texto var costo' =
+			VAR _v = [Var % costo]
+			RETURN IF ( ISBLANK ( _v ), "Sin dato del mes anterior",
+			    IF ( _v > 0, "▲ ", IF ( _v < 0, "▼ ", "= " ) ) & FORMAT ( ABS ( _v ), "0.0 %", "es-CO" ) & " vs mes ant." )
+		displayFolder: 5. Tarjetas
+		lineageTag: e7529640-5aad-5e11-b8f6-836efd5d3148
+
+	/// Variación de la tasa (puntos) lista para mostrar.
+	measure 'Texto var tasa' =
+			VAR _v = [Var tasa]
+			RETURN IF ( ISBLANK ( _v ), "Sin dato del mes anterior",
+			    IF ( _v > 0, "▲ ", IF ( _v < 0, "▼ ", "= " ) ) & FORMAT ( ABS ( _v ), "#,0.00", "es-CO" ) & " pts vs mes ant." )
+		displayFolder: 5. Tarjetas
+		lineageTag: 49f68d85-39b4-53f9-89e5-ecc036b79bc3
+
+	/// Variación de la participación de graves (puntos porcentuales).
+	measure 'Texto var % graves' =
+			VAR _v = [% graves mes] - [% graves mes anterior]
+			RETURN IF ( ISBLANK ( [% graves mes anterior] ), "Sin dato del mes anterior",
+			    IF ( _v > 0, "▲ ", IF ( _v < 0, "▼ ", "= " ) ) & FORMAT ( ABS ( _v ) * 100, "0.0", "es-CO" ) & " p.p. vs mes ant." )
+		displayFolder: 5. Tarjetas
+		lineageTag: 2f7d810b-8d60-5d93-a13e-d5e4e09b74f9
+
+	/// Rojo si empeora (sube), verde si mejora (baja), gris si igual o sin dato.
+	measure 'Color var casos' = SWITCH ( TRUE (), ISBLANK ( [Var casos] ), "#6B7684", [Var casos] > 0, "#B42F2F", [Var casos] < 0, "#0A7D0A", "#6B7684" )
+		displayFolder: 5. Tarjetas
+		lineageTag: fe7df493-b3d7-5ec6-bfce-8827833721ce
+
+	/// Rojo si el costo sube, verde si baja.
+	measure 'Color var costo' = SWITCH ( TRUE (), ISBLANK ( [Var % costo] ), "#6B7684", [Var % costo] > 0, "#B42F2F", [Var % costo] < 0, "#0A7D0A", "#6B7684" )
+		displayFolder: 5. Tarjetas
+		lineageTag: 8e80fbc9-83b3-5f40-b364-d58cb082d4d5
+
+	/// Rojo si la tasa sube, verde si baja.
+	measure 'Color var tasa' = SWITCH ( TRUE (), ISBLANK ( [Var tasa] ), "#6B7684", [Var tasa] > 0, "#B42F2F", [Var tasa] < 0, "#0A7D0A", "#6B7684" )
+		displayFolder: 5. Tarjetas
+		lineageTag: a4ed31c4-3629-5e83-8b4e-ce167f2a24c3
+
+	/// Rojo si sube la participación de graves.
+	measure 'Color var % graves' =
+			VAR _v = [% graves mes] - [% graves mes anterior]
+			RETURN SWITCH ( TRUE (), ISBLANK ( [% graves mes anterior] ), "#6B7684", _v > 0, "#B42F2F", _v < 0, "#0A7D0A", "#6B7684" )
+		displayFolder: 5. Tarjetas
+		lineageTag: 617baca5-a5c3-52d0-8a0a-82c26de5d293
+
+	/// Crítico si tasa del mes > 5; Moderado entre 2 y 5; Bajo < 2; Sin dato si no hay trabajadores activos.
+	measure Clasificación =
+			VAR _t = [Tasa mes]
+			RETURN SWITCH ( TRUE (),
+			    ISBLANK ( [Trabajadores activos] ), "Sin dato",
+			    _t > 5, "Crítico",
+			    _t >= 2, "Moderado",
+			    "Bajo" )
+		displayFolder: 6. Clasificación
+		lineageTag: a4cd7ffb-1d1f-5739-a849-59cae08b7021
+
+	/// Color de estado para la clasificación.
+	measure 'Color clasificación' = SWITCH ( [Clasificación], "Crítico", "#D03B3B", "Moderado", "#D99A00", "Bajo", "#0CA30C", "#6B7684" )
+		displayFolder: 6. Clasificación
+		lineageTag: dde93ab8-5653-537b-bbcc-4f5365ed5135
+
+	/// Clientes con tasa del mes de análisis > 5.
+	measure 'Clientes críticos' = COUNTROWS ( FILTER ( VALUES ( Clientes[id_cliente] ), [Clasificación] = "Crítico" ) ) + 0
+		formatString: #,0
+		displayFolder: 6. Clasificación
+		lineageTag: a58c5c8d-5fcc-597a-a85c-546afae83979
+
+	/// Clientes con tasa del mes entre 2 y 5.
+	measure 'Clientes moderados' = COUNTROWS ( FILTER ( VALUES ( Clientes[id_cliente] ), [Clasificación] = "Moderado" ) ) + 0
+		formatString: #,0
+		displayFolder: 6. Clasificación
+		lineageTag: ea2fe6c1-e264-5abe-9b0a-6218c9b87bf0
+
+	/// Clientes con tasa del mes menor a 2.
+	measure 'Clientes bajo' = COUNTROWS ( FILTER ( VALUES ( Clientes[id_cliente] ), [Clasificación] = "Bajo" ) ) + 0
+		formatString: #,0
+		displayFolder: 6. Clasificación
+		lineageTag: 9e7db8c3-3bb5-5b56-95f8-b45840ffddfb
+
+	/// Clientes críticos en el mes anterior comparable.
+	measure 'Clientes críticos mes anterior' =
+			VAR _ant = EDATE ( [Mes de análisis], -1 )
+			RETURN COUNTROWS ( FILTER ( VALUES ( Clientes[id_cliente] ),
+			    VAR _trab = CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), Calendario[Fecha] = _ant )
+			    RETURN NOT ISBLANK ( _trab ) && DIVIDE ( [Casos mes anterior], _trab ) * 100 > 5 ) ) + 0
+		formatString: #,0
+		displayFolder: 6. Clasificación
+		lineageTag: 87983ebc-cf4c-5a32-a44a-0e8ff96ccedc
+
+	/// Variación de clientes críticos.
+	measure 'Texto var críticos' =
+			VAR _v = [Clientes críticos] - [Clientes críticos mes anterior]
+			RETURN IF ( _v > 0, "▲ ", IF ( _v < 0, "▼ ", "= " ) ) & FORMAT ( ABS ( _v ), "#,0", "es-CO" ) & " clientes vs mes ant."
+		displayFolder: 5. Tarjetas
+		lineageTag: 21ec0ebd-40cb-5574-9e0a-c0b2c7d4e631
+
+	/// Rojo si aumentan los clientes críticos.
+	measure 'Color var críticos' =
+			VAR _v = [Clientes críticos] - [Clientes críticos mes anterior]
+			RETURN IF ( _v > 0, "#B42F2F", IF ( _v < 0, "#0A7D0A", "#6B7684" ) )
+		displayFolder: 5. Tarjetas
+		lineageTag: c6d6bacf-bba0-546a-90a4-d1602b99fa7a
+
+	/// Actividades de prevención en el contexto de filtros.
+	measure 'Actividades prevención' = COUNTROWS ( Prevencion )
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: 7a4d6042-6a6e-5ddb-ba64-f533a631d55c
+
+	/// Participantes en actividades de prevención.
+	measure 'Participantes prevención' = SUM ( Prevencion[Participantes] )
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: 23f11664-cf7d-5c9f-a98f-e290205fedb6
+
+	/// Actividades en los 30 días que terminan en la fecha de corte (misma ventana del pipeline 2.3).
+	measure 'Actividades prevención 30 días' = CALCULATE ( [Actividades prevención], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Fecha corte] - 29, [Fecha corte] ) ) + 0
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: e0b24bcd-177b-524e-9b64-1fd50d35493f
+
+	/// Participantes en los últimos 30 días.
+	measure 'Participantes prevención 30 días' = CALCULATE ( [Participantes prevención], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Fecha corte] - 29, [Fecha corte] ) ) + 0
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: 31c9191a-23ac-56b7-b81f-84584514d890
+
+	/// Clientes activos sin ninguna actividad de prevención en los últimos 30 días.
+	measure 'Clientes sin prevención 30 días' = COUNTROWS ( FILTER ( VALUES ( Clientes[id_cliente] ), CALCULATE ( SELECTEDVALUE ( Clientes[Estado cliente] ) ) = "Activo" && [Actividades prevención 30 días] = 0 ) ) + 0
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: 6bd10cfe-5767-522a-8ebb-125e67e2df40
+
+	/// Texto de apoyo de la tarjeta de prevención.
+	measure 'Texto sin prevención' = FORMAT ( [Clientes sin prevención 30 días], "#,0", "es-CO" ) & " clientes sin prevención"
+		displayFolder: 5. Tarjetas
+		lineageTag: be94892c-f461-5ea6-a47b-ae33d5e37519
+
+	/// Rojo si hay clientes sin prevención reciente.
+	measure 'Color sin prevención' = IF ( [Clientes sin prevención 30 días] > 0, "#B42F2F", "#0A7D0A" )
+		displayFolder: 5. Tarjetas
+		lineageTag: 1cf79686-617a-5557-98fd-b323c35737de
+
+	/// Días desde la última actividad de prevención hasta la fecha de corte (en blanco si nunca tuvo).
+	measure 'Días sin prevención' =
+			VAR _corte = [Fecha corte]
+			VAR _ult = CALCULATE ( MAX ( Prevencion[Fecha actividad] ), REMOVEFILTERS ( Calendario ), Calendario[Fecha] <= _corte )
+			RETURN IF ( NOT ISBLANK ( _ult ), INT ( _corte - _ult ) )
+		formatString: #,0
+		displayFolder: 7. Prevención
+		lineageTag: 212a74e4-c358-5b32-baf7-1c42d8879e8e
+
+	/// Intensidad de prevención: actividades de los últimos 12 meses por cada 100 trabajadores activos.
+	measure 'Actividades por 100 trabajadores 12m' =
+			VAR _act = CALCULATE ( [Actividades prevención], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], EDATE ( [Fecha corte], -12 ) + 1, [Fecha corte] ) )
+			RETURN DIVIDE ( _act, [Trabajadores activos] ) * 100
+		formatString: #,0.0
+		displayFolder: 7. Prevención
+		lineageTag: 09ead976-414d-5ccd-aeca-446bc07ff8f2
+
+	/// Casos en los 90 días que terminan en la fecha de corte.
+	measure 'Casos 90 días' = CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], [Fecha corte] - 89, [Fecha corte] ) ) + 0
+		formatString: #,0
+		displayFolder: 8. Priorización
+		lineageTag: 2af007f5-738c-54f5-8b27-6bb42df87fc7
+
+	/// Tasa mensual de los últimos 90 días: casos 90 d / trabajadores-mes de los 3 últimos periodos × 100.
+	measure 'Tasa 90 días' =
+			VAR _mesCorte = DATE ( YEAR ( [Fecha corte] ), MONTH ( [Fecha corte] ), 1 )
+			VAR _trab = CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], EDATE ( _mesCorte, -2 ), _mesCorte ) )
+			RETURN DIVIDE ( [Casos 90 días], _trab ) * 100
+		formatString: #,0.00
+		displayFolder: 8. Priorización
+		lineageTag: 63bfe0c4-4696-5296-b57a-519dc5ad9f09
+
+	/// Casos graves abiertos de los últimos 12 meses (sin importar el periodo filtrado).
+	measure 'Graves abiertos a la fecha' = CALCULATE ( [Casos graves abiertos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], EDATE ( [Fecha corte], -12 ) + 1, [Fecha corte] ) ) + 0
+		formatString: #,0
+		displayFolder: 8. Priorización
+		lineageTag: 45199056-6e50-5df1-b516-be664aec0b52
+
+	/// Casos de cada mes del eje, solo para los 12 meses que terminan en el mes de análisis.
+	measure 'Casos tendencia' =
+			VAR _m = SELECTEDVALUE ( 'Eje Periodo'[Inicio mes] )
+			VAR _ana = [Mes de análisis]
+			RETURN IF ( _m <= _ana && _m > EDATE ( _ana, -12 ),
+			    CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _m, MIN ( EOMONTH ( _m, 0 ), [Fecha corte] ) ) ) + 0 )
+		formatString: #,0
+		displayFolder: 9. Tendencia
+		lineageTag: b0112a07-cd5d-537c-9fda-2e79129b8881
+
+	/// Tasa de incidencia de cada mes del eje (12 meses que terminan en el mes de análisis).
+	measure 'Tasa tendencia' =
+			VAR _m = SELECTEDVALUE ( 'Eje Periodo'[Inicio mes] )
+			VAR _ana = [Mes de análisis]
+			RETURN IF ( _m <= _ana && _m > EDATE ( _ana, -12 ),
+			    DIVIDE (
+			        CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _m, MIN ( EOMONTH ( _m, 0 ), [Fecha corte] ) ) ),
+			        CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), Calendario[Fecha] = _m ) ) * 100 )
+		formatString: #,0.00
+		displayFolder: 9. Tendencia
+		lineageTag: 749a331d-dd58-5984-8acb-f77cab195925
+
+	/// Casos graves por mes del eje.
+	measure 'Casos graves tendencia' =
+			VAR _m = SELECTEDVALUE ( 'Eje Periodo'[Inicio mes] )
+			VAR _ana = [Mes de análisis]
+			RETURN IF ( _m <= _ana && _m > EDATE ( _ana, -12 ),
+			    CALCULATE ( [Casos graves], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], _m, MIN ( EOMONTH ( _m, 0 ), [Fecha corte] ) ) ) + 0 )
+		formatString: #,0
+		displayFolder: 9. Tendencia
+		lineageTag: e71197c1-63f3-5e0b-9f2d-f23395b15c77
+
+	/// Casos leves por mes del eje.
+	measure 'Casos leves tendencia' = [Casos tendencia] - [Casos graves tendencia]
+		formatString: #,0
+		displayFolder: 9. Tendencia
+		lineageTag: 404de2de-a39b-5352-ba6b-2f81df043e33
+
+	/// Promedio mensual de casos de los meses cerrados disponibles hasta el mes de análisis (referencia de la tendencia).
+	measure 'Promedio histórico casos' =
+			VAR _ana = [Mes de análisis]
+			VAR _mesCorte = DATE ( YEAR ( [Fecha corte] ), MONTH ( [Fecha corte] ), 1 )
+			VAR _meses = FILTER ( ALL ( 'Eje Periodo'[Inicio mes] ), 'Eje Periodo'[Inicio mes] <= _ana && 'Eje Periodo'[Inicio mes] < _mesCorte )
+			RETURN AVERAGEX ( _meses, CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], 'Eje Periodo'[Inicio mes], EOMONTH ( 'Eje Periodo'[Inicio mes], 0 ) ) ) )
+		formatString: #,0
+		displayFolder: 9. Tendencia
+		lineageTag: cec0470b-a6e6-50a0-b278-63724463e4cb
+
+	/// Tasa mensual promedio de los meses cerrados hasta el mes de análisis.
+	measure 'Promedio histórico tasa' =
+			VAR _ana = [Mes de análisis]
+			VAR _mesCorte = DATE ( YEAR ( [Fecha corte] ), MONTH ( [Fecha corte] ), 1 )
+			VAR _fin = MIN ( EOMONTH ( _ana, 0 ), _mesCorte - 1 )
+			RETURN DIVIDE (
+			    CALCULATE ( [Total casos], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], BLANK (), _fin ) ),
+			    CALCULATE ( [Trabajadores-mes], REMOVEFILTERS ( Calendario ), DATESBETWEEN ( Calendario[Fecha], BLANK (), _fin ) ) ) * 100
+		formatString: #,0.00
+		displayFolder: 9. Tendencia
+		lineageTag: 4e4c7547-93e9-5a41-8e69-a5e13b483b5a
+
+	/// Explica la línea de referencia de la tendencia de casos.
+	measure 'Subtítulo tendencia casos' = "Línea punteada = promedio histórico mensual (meses cerrados): " & FORMAT ( [Promedio histórico casos], "#,0", "es-CO" ) & " casos"
+		displayFolder: 9. Tendencia
+		lineageTag: b49429d9-2e67-5291-aa9f-ed79b3145fd9
+
+	/// Explica la línea de referencia de la tendencia de la tasa.
+	measure 'Subtítulo tendencia tasa' = "Línea punteada = tasa promedio histórica (meses cerrados): " & FORMAT ( [Promedio histórico tasa], "#,0.00", "es-CO" )
+		displayFolder: 9. Tendencia
+		lineageTag: 0a2b8b43-b70f-5579-b48d-9a0953c573e9
+
+	/// Título dinámico de la tendencia de la tasa.
+	measure 'Título tasa' =
+			"Tasa de incidencia por mes (casos x 100 trabajadores)"
+			    & IF ( [Es mes en curso] = 1, " · el último mes es parcial", "" )
+		displayFolder: 9. Tendencia
+		lineageTag: 531861ce-3896-5bd8-84af-ea084b992392
+
+	/// Azul para meses cerrados; azul claro para el mes en curso (parcial).
+	measure 'Color barra tendencia' =
+			VAR _m = SELECTEDVALUE ( 'Eje Periodo'[Inicio mes] )
+			RETURN IF ( EOMONTH ( _m, 0 ) > [Fecha corte], "#86B6EF", "#0055A0" )
+		displayFolder: 9. Tendencia
+		lineageTag: f5b5640b-af0c-5b71-ab72-9351b77ddbcd
+
+	/// Título dinámico de la tendencia.
+	measure 'Título tendencia' =
+			"Casos por mes · 12 meses hasta " & LOOKUPVALUE ( Calendario[Periodo], Calendario[Fecha], [Mes de análisis] )
+			    & IF ( [Es mes en curso] = 1, " (barra clara = mes en curso, parcial)", "" )
+		displayFolder: 9. Tendencia
+		lineageTag: 1eb069df-2b98-5c09-b68e-799461cbd3c0
+
+	/// Medida A tal como está en la prueba: cuenta id_caso (incluye anulados) acumulado en el año.
+	measure 'A · Casos YTD (literal)' = TOTALYTD ( COUNT ( Casos[ID caso] ), Calendario[Fecha] )
+		formatString: #,0
+		displayFolder: 10. Pregunta 1.5
+		lineageTag: d89d87ab-fa3f-54b0-8999-b9870a370d01
+
+	/// Demostración: la Medida B sin ALL(clientes) siempre da 100 % en cada fila.
+	measure 'B · % participación sin ALL' = DIVIDE ( [Total casos], CALCULATE ( [Total casos] ), 0 )
+		formatString: 0.0 %
+		displayFolder: 10. Pregunta 1.5
+		lineageTag: 444a524b-b786-57da-b452-14f3b7d34b68
+
+	/// Medida C tal como está en la prueba: casos del mes menos casos del mes anterior con PREVIOUSMONTH.
+	measure 'C · Var vs mes anterior (literal)' = [Total casos] - CALCULATE ( [Total casos], PREVIOUSMONTH ( Calendario[Fecha] ) )
+		formatString: +#,0;-#,0;0
+		displayFolder: 10. Pregunta 1.5
+		lineageTag: 010120ae-357c-564d-a856-52f19a3972d6
+
+	/// Medida C robusta: en blanco si no existe mes anterior en el calendario y 0 explícito si existe pero no tuvo casos.
+	measure 'C · Var vs mes anterior (corregida)' =
+			VAR _act = [Total casos] + 0
+			VAR _hayAnterior = NOT ISEMPTY ( PREVIOUSMONTH ( Calendario[Fecha] ) )
+			VAR _ant = CALCULATE ( [Total casos], PREVIOUSMONTH ( Calendario[Fecha] ) ) + 0
+			RETURN IF ( _hayAnterior && HASONEVALUE ( Calendario[Inicio mes] ), _act - _ant )
+		formatString: +#,0;-#,0;0
+		displayFolder: 10. Pregunta 1.5
+		lineageTag: 76585b38-ac2a-517a-a385-d3e5fb66a59a
+
+	column Columna
+		isHidden
+		lineageTag: 3cd55051-2cfd-5b68-8f52-71208a07ec41
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Columna]
+
+	partition _Medidas = calculated
+		mode: import
+		source = ROW ( "Columna", BLANK () )
+

@@ -1,0 +1,81 @@
+/// Hecho: un registro por incidente reportado.
+table Casos
+	lineageTag: d7d3f0d4-28ba-5df5-b647-801316651e7e
+
+	column 'ID caso'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1b0edcc8-9221-5998-bffe-0491f399cbce
+		summarizeBy: none
+		sourceColumn: ID caso
+
+	column id_cliente
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: abb024c0-6c11-54f6-9557-917888afd24e
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	column id_trabajador
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c3eb17fe-f1c4-59e3-8c00-0eb41e020606
+		summarizeBy: none
+		sourceColumn: id_trabajador
+
+	column 'Fecha ocurrencia'
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: e467c866-8cd5-5744-9528-92dffa2198d6
+		summarizeBy: none
+		sourceColumn: Fecha ocurrencia
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// Leve o Grave, según el campo oficial casos.tipo.
+	column 'Tipo de caso'
+		dataType: string
+		lineageTag: af126db2-ed89-5cac-abed-eaeafbc4ea2c
+		summarizeBy: none
+		sourceColumn: Tipo de caso
+
+	column 'Días de ausencia'
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: ee389e9e-7b3f-54f9-af1b-6bf3914553e9
+		summarizeBy: none
+		sourceColumn: Días de ausencia
+
+	column Costo
+		dataType: double
+		isHidden
+		formatString: \$ #,0
+		lineageTag: 05ec4346-6e49-5110-b76e-c34d648ba66c
+		summarizeBy: none
+		sourceColumn: Costo
+
+	/// Abierto, Cerrado o Anulado. Los anulados no cuentan como casos.
+	column 'Estado del caso'
+		dataType: string
+		lineageTag: 25242520-b81d-510c-b541-a49db92badc8
+		summarizeBy: none
+		sourceColumn: Estado del caso
+
+	partition Casos = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(RutaDatos & "casos.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    // Cultura en-US: el CSV usa punto decimal y fechas ISO
+				    Tipos = Table.TransformColumnTypes(Encabezados, {{"id_caso", Int64.Type}, {"id_cliente", Int64.Type}, {"id_trabajador", Int64.Type}, {"fecha_ocurrencia", type date}, {"tipo", type text}, {"dias_ausencia", Int64.Type}, {"costo", type number}, {"estado", type text}}, "en-US"),
+				    Tipo = Table.TransformColumns(Tipos, {{"tipo", Text.Proper, type text}, {"estado", Text.Proper, type text}}),
+				    Paso = Table.RenameColumns(Tipo, {{"tipo", "Tipo de caso"}, {"estado", "Estado del caso"}}),
+				    Renombradas = Table.RenameColumns(Paso, {{"id_caso", "ID caso"}, {"fecha_ocurrencia", "Fecha ocurrencia"}, {"dias_ausencia", "Días de ausencia"}, {"costo", "Costo"}})
+				in
+				    Renombradas
+

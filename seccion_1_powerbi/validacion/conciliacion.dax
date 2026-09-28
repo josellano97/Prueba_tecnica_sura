@@ -1,0 +1,10 @@
+-- ### por_cliente
+EVALUATE SUMMARIZECOLUMNS ( Clientes[id_cliente], TREATAS ( { "Activo" }, Clientes[Estado cliente] ), "casos_mes", [Casos mes], "ant", [Casos mes anterior], "trab", [Trabajadores activos], "tasa", [Tasa mes], "clas", [Clasificación], "prev30", [Actividades prevención 30 días], "c90", [Casos 90 días], "diasprev", [Días sin prevención] )
+-- ### por_mes
+EVALUATE SUMMARIZECOLUMNS ( Calendario[Periodo orden], "casos", [Total casos], "trab", [Trabajadores-mes], "tasa", [Tasa de incidencia], "graves", [Casos graves], "costo", [Costo total] )
+-- ### resumen_activos
+EVALUATE CALCULATETABLE ( ROW ( "criticos", [Clientes críticos], "moderados", [Clientes moderados], "bajo", [Clientes bajo], "sinprev", [Clientes sin prevención 30 días], "casos_mes", [Casos mes], "ant_mismo_corte", [Casos mes anterior] ), Clientes[Estado cliente] = "Activo" )
+-- ### mes_cerrado_ago
+EVALUATE CALCULATETABLE ( ROW ( "mes", [Mes de análisis], "casos", [Casos mes], "ant", [Casos mes anterior], "tasa", [Tasa mes], "tasa_ant", [Tasa mes anterior], "texto", [Texto mes de análisis] ), Calendario[Periodo] = "Ago 2026" )
+-- ### sin_historia_ene2024
+EVALUATE CALCULATETABLE ( ROW ( "casos", [Casos mes], "ant", [Casos mes anterior], "var", [Var casos], "texto", [Texto var casos], "C_literal", [C · Var vs mes anterior (literal)], "C_corr", [C · Var vs mes anterior (corregida)] ), Calendario[Periodo] = "Ene 2024" )

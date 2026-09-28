@@ -1,0 +1,2 @@
+-- ### rls
+EVALUATE ROW ( "clientes", COUNTROWS ( Clientes ), "coordinadores", DISTINCTCOUNT ( Clientes[Coordinador] ), "casos", [Total casos], "seguridad_filas", COUNTROWS ( 'Seguridad Asignacion' ), "usuario", USERPRINCIPALNAME () )

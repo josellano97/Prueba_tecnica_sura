@@ -1,0 +1,6 @@
+/// Acceso a todos los clientes.
+role Gerencia
+	modelPermission: read
+
+	annotation PBI_Id = 88b2e25869835095a5bb3a4de3c297f0
+

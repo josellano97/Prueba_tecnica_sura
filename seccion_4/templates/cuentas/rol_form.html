@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}{% if form.instance.pk %}Editar rol{% else %}Nuevo rol{% endif %}{% endblock %}
+{% block encabezado %}{% if form.instance.pk %}Rol «{{ form.instance.name }}»{% else %}Nuevo rol{% endif %}{% endblock %}
+{% block subencabezado %}<a href="{% url 'cuentas:roles' %}">← Volver a roles</a>{% endblock %}
+{% block contenido %}
+<form method="post" class="formulario" novalidate>
+  {% csrf_token %}
+  {% include "partials/errores_form.html" %}
+  <section class="tarjeta formulario-tarjeta estrecha">
+    {% with campo=form.name %}{% include "partials/campo.html" %}{% endwith %}
+    <fieldset class="grupo-casillas">
+      <legend>{{ form.permisos.label }}</legend>
+      {% for opcion in form.permisos %}<label class="casilla">{{ opcion.tag }} <span>{{ opcion.choice_label }}</span></label>{% endfor %}
+      {% for e in form.permisos.errors %}<small class="error-campo" role="alert">{{ e }}</small>{% endfor %}
+    </fieldset>
+    <p class="ayuda">Los cambios aplican de inmediato a todos los usuarios con este rol. Solo puede otorgar permisos que usted tiene.</p>
+    <div class="acciones-form">
+      <a class="btn" href="{% url 'cuentas:roles' %}">Cancelar</a>
+      <button class="btn btn-primario" type="submit">{% if form.instance.pk %}Guardar cambios{% else %}Crear rol{% endif %}</button>
+    </div>
+  </section>
+</form>
+{% endblock %}

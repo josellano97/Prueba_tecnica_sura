@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block titulo %}Página no encontrada{% endblock %}
+{% block encabezado %}Página no encontrada{% endblock %}
+{% block cuerpo %}{% if user.is_authenticated %}{{ block.super }}{% else %}
+<main class="acceso"><section class="acceso-panel error-pagina"><p class="codigo-error">404</p><h2>La página no existe</h2><p>Revise la dirección o vuelva al inicio.</p><a class="btn btn-primario" href="/">Volver al inicio</a></section></main>{% endif %}{% endblock %}
+{% block contenido %}<section class="tarjeta error-pagina"><p class="codigo-error">404</p><h2>La página no existe</h2><p>Revise la dirección o vuelva al inicio.</p><a class="btn btn-primario" href="/">Volver al inicio</a></section>{% endblock %}

@@ -1,0 +1,24 @@
+relationship 5f058bbf-fc08-57d1-add2-c77fb43e0488
+	fromColumn: Casos.id_cliente
+	toColumn: Clientes.id_cliente
+
+relationship 6d6224d8-9fac-5ee8-8da9-0d482fbdfeb3
+	fromColumn: Facturacion.id_cliente
+	toColumn: Clientes.id_cliente
+
+relationship 6dc57248-3a0f-5890-8587-34131d1c55af
+	fromColumn: Prevencion.id_cliente
+	toColumn: Clientes.id_cliente
+
+relationship 0c5d2a37-bd76-52ca-821a-f3d4a6d826fa
+	fromColumn: Casos.'Fecha ocurrencia'
+	toColumn: Calendario.Fecha
+
+relationship 68719def-9e63-57df-ac51-6bbe61f6f518
+	fromColumn: Facturacion.Periodo
+	toColumn: Calendario.Fecha
+
+relationship c2c13ebc-76c6-5357-bb46-6b9e0135a9e3
+	fromColumn: Prevencion.'Fecha actividad'
+	toColumn: Calendario.Fecha
+

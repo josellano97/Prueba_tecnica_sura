@@ -1,0 +1,51 @@
+/// Hecho: un registro por cliente y periodo facturado (día 1 del mes). Fuente de trabajadores activos.
+table Facturacion
+	lineageTag: f12563ce-6493-5927-b70b-2002c9706d38
+
+	column id_cliente
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d6ee0acf-50ae-5448-bf65-51340aabc234
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	column Periodo
+		dataType: dateTime
+		isHidden
+		formatString: mmm yyyy
+		lineageTag: 9c63cd05-80f2-5193-91b5-72f154ccb03a
+		summarizeBy: none
+		sourceColumn: Periodo
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Trabajadores activos'
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: cca12d98-8026-5349-a1a3-9a8fd85d4c24
+		summarizeBy: none
+		sourceColumn: Trabajadores activos
+
+	column 'Valor contrato'
+		dataType: double
+		isHidden
+		formatString: \$ #,0
+		lineageTag: 7c336a27-0f43-54b8-8748-b593fa655b98
+		summarizeBy: none
+		sourceColumn: Valor contrato
+
+	partition Facturacion = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(RutaDatos & "facturacion.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    // Cultura en-US: el CSV usa punto decimal y fechas ISO
+				    Tipos = Table.TransformColumnTypes(Encabezados, {{"id_cliente", Int64.Type}, {"periodo", type date}, {"trabajadores_activos", Int64.Type}, {"valor_contrato", type number}}, "en-US"),
+				    Paso = Tipos,
+				    Renombradas = Table.RenameColumns(Paso, {{"periodo", "Periodo"}, {"trabajadores_activos", "Trabajadores activos"}, {"valor_contrato", "Valor contrato"}})
+				in
+				    Renombradas
+

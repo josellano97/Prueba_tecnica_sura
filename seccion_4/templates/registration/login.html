@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load static %}
+{% block titulo %}Iniciar sesión{% endblock %}
+{% block clase_body %}pantalla-acceso{% endblock %}
+{% block cuerpo %}
+<main class="acceso">
+  <section class="acceso-panel" aria-labelledby="titulo-acceso">
+    <img src="{% static 'img/logo_sura.png' %}" alt="Grupo SURA" class="acceso-logo">
+    <h1 id="titulo-acceso">Monitoreo de siniestralidad</h1>
+    <p class="acceso-sub">Ingrese con su usuario corporativo para ver el tablero de sus clientes.</p>
+
+    {% if form.non_field_errors %}
+    <div class="aviso aviso-error" role="alert">
+      <svg class="icono" aria-hidden="true"><use href="#i-alerta"></use></svg>
+      <span>{% for e in form.non_field_errors %}{{ e }}{% endfor %}</span>
+    </div>
+    {% endif %}
+    {% if request.GET.next and not form.errors %}
+    <div class="aviso aviso-info" role="status">
+      <svg class="icono" aria-hidden="true"><use href="#i-candado"></use></svg>
+      <span>Debe iniciar sesión para continuar.</span>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate class="formulario">
+      {% csrf_token %}
+      <div class="campo">
+        <label for="{{ form.username.id_for_label }}">Usuario</label>
+        {{ form.username }}
+      </div>
+      <div class="campo">
+        <label for="{{ form.password.id_for_label }}">Contraseña</label>
+        {{ form.password }}
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn btn-primario btn-bloque">Ingresar</button>
+    </form>
+    <p class="acceso-nota">¿Olvidó su contraseña o no tiene acceso? Contacte al administrador del sistema.</p>
+  </section>
+  <aside class="acceso-lado" aria-hidden="true">
+    <div>
+      <p class="acceso-lado-titulo">Casos, costo y tasa de incidencia de sus clientes, en un solo lugar.</p>
+      <ul>
+        <li>Indicadores del mes con su variación</li>
+        <li>Tendencia de 12 meses y promedio histórico</li>
+        <li>Clientes que requieren atención primero</li>
+      </ul>
+    </div>
+  </aside>
+</main>
+{% endblock %}

@@ -1,0 +1,15 @@
+<div class="asistente" id="asistente" data-url="{{ asistente.url }}" data-autorizacion="{{ asistente.autorizacion }}">
+  <button type="button" class="asistente-burbuja" id="asistente-abrir" aria-expanded="false" aria-controls="asistente-panel">
+    <svg class="icono" aria-hidden="true"><use href="#i-chat"></use></svg><span>Asistente</span>
+  </button>
+  <section class="asistente-panel" id="asistente-panel" role="dialog" aria-labelledby="asistente-titulo" hidden>
+    <header class="asistente-cab">
+      <div>
+        <h2 id="asistente-titulo">Asistente de siniestralidad</h2>
+        <p>Responde con los mismos datos del tablero</p>
+      </div>
+      <button type="button" class="btn-cerrar" id="asistente-cerrar" aria-label="Cerrar el asistente">×</button>
+    </header>
+    {% include "partials/asistente_chat.html" %}
+  </section>
+</div>

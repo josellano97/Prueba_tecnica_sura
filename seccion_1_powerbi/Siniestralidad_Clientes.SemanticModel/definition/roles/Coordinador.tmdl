@@ -1,0 +1,10 @@
+/// Cada coordinador ve solo los clientes que tiene asignados (seguridad dinámica por correo).
+role Coordinador
+	modelPermission: read
+
+	tablePermission Clientes = [id_cliente] IN CALCULATETABLE ( VALUES ( 'Seguridad Asignacion'[id_cliente] ), 'Seguridad Asignacion'[Correo] = LOWER ( USERPRINCIPALNAME () ) )
+
+	tablePermission 'Seguridad Asignacion' = [Correo] = LOWER ( USERPRINCIPALNAME () )
+
+	annotation PBI_Id = e08ad8c7f0ce51d2981bcdbde6de0c78
+

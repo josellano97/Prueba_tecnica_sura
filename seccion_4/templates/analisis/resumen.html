@@ -1,0 +1,212 @@
+{% extends "base.html" %}{% load analitica %}
+{% block titulo %}Análisis gerencial{% endblock %}
+{% block encabezado %}Análisis gerencial{% endblock %}
+{% block subencabezado %}Qué está pasando, por qué y dónde poner la atención{% endblock %}
+{% block contenido %}
+{% if sin_datos %}
+<section class="tarjeta estado-vacio"><h2>No hay datos cargados</h2><p>Cargue la fuente del proyecto con <code>python manage.py cargar_datos_proyecto</code>.</p></section>
+{% else %}
+{% include "analisis/_filtros.html" %}
+{% if a.vacio %}
+<section class="tarjeta estado-vacio"><h2>Sin datos para esta selección</h2><p>No hay clientes con facturación en {{ f.mes|fmes }} con los filtros aplicados.</p></section>
+{% else %}
+<p class="contexto-datos">
+  <svg class="icono pequeno" aria-hidden="true"><use href="#i-info"></use></svg>
+  <b>{{ f.mes|fmes|capfirst }}</b> (mes cerrado{% if a.cubo.carga %}, corte {{ a.cubo.carga.fecha_corte|date:"d/m/Y" }}{% endif %}) ·
+  {{ a.cubo.clientes|length }} clientes en el alcance
+</p>
+
+{# ------------------------------------------------ 1. Resumen ejecutivo #}
+<section class="tarjeta resumen-ejecutivo" id="resumen" aria-labelledby="t-resumen">
+  <h2 id="t-resumen">Resumen ejecutivo</h2>
+  <ul class="puntos-resumen">
+    {% for p in a.resumen.puntos %}
+    <li class="punto tono-{{ p.tono }}"><span class="punto-titulo">{{ p.titulo }}</span><p>{{ p.texto }}</p></li>
+    {% endfor %}
+  </ul>
+  <p class="limites"><span class="etiqueta-frase advertencia">Límites</span> {{ a.resumen.advertencia.texto }}
+    {% if perms.tablero.ver_calidad_datos and a.calidad_relevante %}<a href="{% url 'analisis:calidad' %}">Ver calidad de datos</a>{% endif %}</p>
+</section>
+
+{# ------------------------------------------------ 2. KPIs de nivel 1 #}
+<section id="kpis" aria-labelledby="t-kpis">
+  <h2 class="titulo-seccion" id="t-kpis">Indicadores clave <small>{{ f.mes|fmes }}</small></h2>
+  <div class="kpis-gerenciales">
+    {% for c in nivel1 %}{% include "analisis/_kpi.html" %}{% endfor %}
+  </div>
+  {% if a.kpis_no_disponibles %}<p class="ayuda">No disponibles con esta fuente de datos: {% for k in a.kpis_no_disponibles %}{{ k.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+</section>
+
+{# ------------------------------------------------ 3. Qué revisar (solo prioridad alta) #}
+<section class="tarjeta" id="alertas" aria-labelledby="t-alertas">
+  <div class="panel-cabecera"><div><h2 id="t-alertas">Qué debería revisar</h2>
+    <p class="sub">Solo prioridad alta: diferencias con menos de 0,1 % de probabilidad de ser azar, o regla oficial.</p></div></div>
+  {% if alertas_altas %}
+  <ul class="lista-alertas">
+    {% for al in alertas_altas %}
+    <li class="alerta-fila">
+      <span class="alerta-marca" aria-hidden="true"></span>
+      <div class="alerta-texto"><b>{{ al.titulo }}</b><small>{{ al.corto|default:al.hecho }}</small></div>
+      <div class="alerta-accion">
+        {% if al.enlace.vista == "calidad" %}<a href="{% url 'analisis:calidad' %}">Ver calidad →</a>
+        {% elif al.enlace.vista %}<a href="#{{ al.enlace.vista }}" data-abrir="seguimiento">Ver lista →</a>
+        {% elif al.enlace.dimension %}<a href="{% url 'analisis:diagnostico' %}?{{ qs }}&amp;dim={{ al.enlace.dimension }}{% if al.enlace.sector %}&amp;valor={{ al.enlace.sector }}{% endif %}{% if al.enlace.cliente %}&amp;cliente={{ al.enlace.cliente }}{% endif %}">Abrir diagnóstico →</a>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="estado-ok-texto"><svg class="icono" aria-hidden="true"><use href="#i-ok"></use></svg> No hay situaciones de prioridad alta con los filtros aplicados.</p>
+  {% endif %}
+  {% if n_alertas_media %}<p class="ayuda">{{ n_alertas_media }} situación{{ n_alertas_media|pluralize:"es" }} más de prioridad media: se ven en el <a href="{% url 'analisis:diagnostico' %}?{{ qs }}">diagnóstico</a> (columna «¿Significativo?»).</p>{% endif %}
+</section>
+
+{# ------------------------------------------------ 4. Tendencia #}
+<section class="tarjeta" id="tendencia" aria-labelledby="t-tend">
+  <div class="panel-cabecera"><div><h2 id="t-tend">¿Desde cuándo? Tasa de incidencia, 24 meses</h2>
+    <p class="sub">Puntos rojos o verdes: meses fuera de lo esperable frente a sus 12 meses previos (p &lt; 0,01).</p></div></div>
+  <div class="grafico grafico-desliza">{% grafico_tendencia a.serie "tasa" a.kpis.tasa.referencias.promedio_12m.valor 160 %}</div>
+  <div class="leyenda"><span><i class="muestra linea"></i>Tasa mensual</span><span><i class="muestra punteada"></i>Promedio 12 meses previos</span><span><i class="marca pico"></i>Pico</span><span><i class="marca caida"></i>Caída</span></div>
+  <div class="rejilla-3 compacta datos-tendencia">
+    {% with t=a.kpis.tasa.tendencia %}<div><span class="etiqueta">Tendencia 12 meses</span><strong>{% if t.direccion == "sube" %}Creciente{% elif t.direccion == "baja" %}Decreciente{% else %}Sin tendencia clara{% endif %}</strong></div>{% endwith %}
+    <div><span class="etiqueta">Meses anómalos (24 m)</span><strong>{% for s in a.meses_anomalos %}{{ s.periodo|fmes:1 }}{% if not forloop.last %}, {% endif %}{% empty %}Ninguno{% endfor %}</strong></div>
+    {% with y=a.kpis.tasa.ytd %}<div><span class="etiqueta">Año corrido vs año anterior</span><strong>{{ y.valor|fnum:2 }} vs {{ y.anterior|fnum:2 }} <small class="{% if y.variacion > 0 %}peor{% else %}mejor{% endif %}">({{ y.variacion|fvar }})</small></strong></div>{% endwith %}
+  </div>
+</section>
+
+{# ------------------------------------------------ 5. Por qué cambió (periodo y criterio elegibles) #}
+<section class="tarjeta" id="porque" aria-labelledby="t-porque">
+  {% with c=cambio o=cambio.opciones %}
+  <div class="panel-cabecera"><div><h2 id="t-porque">¿Por qué cambió?</h2>
+    <p class="sub"><b>{{ c.actual|capfirst }}</b> frente a <b>{{ c.base }}</b></p></div></div>
+  <form method="get" action="{{ request.path }}#porque" class="controles-cambio" data-autoenvio aria-label="Periodo y criterio de comparación">
+    {% if f.coordinador_id %}<input type="hidden" name="coordinador" value="{{ f.coordinador_id }}">{% endif %}
+    {% if f.sector_id %}<input type="hidden" name="sector" value="{{ f.sector_id }}">{% endif %}
+    {% if f.clases|length < 5 %}{% for cl in f.clases %}<input type="hidden" name="clase" value="{{ cl }}">{% endfor %}{% endif %}
+    <label>Hasta el mes<select name="mes">{% for v, e in periodos %}<option value="{{ v }}" {% if v == f.mes|date:'Y-m' %}selected{% endif %}>{{ e|capfirst }}</option>{% endfor %}</select></label>
+    <label>Periodo<select name="periodo">{% for v, e in op_cambio.periodos %}<option value="{{ v }}" {% if v == o.periodo %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></label>
+    <label>Comparar con<select name="comp" {% if o.periodo == "ytd" or o.periodo == "12m" %}disabled title="Año corrido y 12 meses se comparan con el año anterior"{% endif %}>{% for v, e in op_cambio.comparaciones %}<option value="{{ v }}" {% if v == o.comp %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></label>
+    <label>Abrir por<select name="por">{% for v, e in op_cambio.por %}<option value="{{ v }}" {% if v == o.por %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></label>
+    <label>Medida<select name="medida">{% for v, e in op_cambio.medidas %}<option value="{{ v }}" {% if v == o.medida %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></label>
+    <button class="btn btn-secundario" type="submit" data-sin-js>Actualizar</button>
+  </form>
+  {% if not c.disponible %}
+  <p class="tenue">{{ c.motivo }}</p>
+  {% else %}{% with d=c.d %}
+  <p class="lectura-cambio {% if c.significativo and d.casos.riesgo > 0 %}peor{% endif %}">{{ c.lectura }}</p>
+  <div class="descomp-fila">
+    <div class="descomp"><span class="etiqueta">Casos</span><strong>{{ d.a0.casos|fnum }} → {{ d.a1.casos|fnum }} <small>({{ d.casos.total|fdelta }})</small></strong>
+      <dl><dt>Por número de trabajadores</dt><dd>{{ d.casos.exposicion|fdelta:1 }}</dd><dt>Por cambio de la tasa</dt><dd>{{ d.casos.riesgo|fdelta:1 }}</dd></dl></div>
+    <div class="descomp"><span class="etiqueta">Tasa por 100 trabajadores</span><strong>{{ d.casos.r0|fnum:2 }} → {{ d.casos.r1|fnum:2 }} <small>({{ d.tasa.total|fdelta:2 }})</small></strong>
+      <dl><dt>Por mezcla de clases de riesgo</dt><dd>{{ d.tasa.mezcla|fdelta:2 }}</dd><dt>Dentro de cada clase</dt><dd>{{ d.tasa.intra|fdelta:2 }}</dd></dl></div>
+    <div class="descomp"><span class="etiqueta">Costo</span><strong>{{ d.a0.costo|fcop }} → {{ d.a1.costo|fcop }}</strong>
+      <dl><dt>Por número de casos</dt><dd>{{ d.costo.volumen|fcop:1 }}</dd><dt>Por costo por caso</dt><dd>{{ d.costo.costo_por_caso|fcop:1 }}</dd></dl></div>
+  </div>
+  <h3 class="sub-bloque">Quién explica el cambio de {{ c.medida|lower }} · por {{ c.nombre_por|lower }}</h3>
+  {% if c.filas %}
+  <div class="tabla-contenedor"><table class="tabla divergente" aria-label="Variación de {{ c.medida }} por {{ c.nombre_por }}">
+    <thead><tr><th scope="col">{{ c.nombre_por }}</th><th scope="col" class="num col-opcional">Antes</th><th scope="col" class="num col-opcional">Ahora</th><th scope="col" class="eje-div"><span>bajó</span><span>subió</span></th><th scope="col" class="num">Variación</th></tr></thead>
+    <tbody>{% for x in c.filas %}<tr>
+      <td class="nombre-div">{{ x.nombre }}{% if x.solo_actual %} <span class="marca-texto">sin facturación antes</span>{% elif x.solo_base %} <span class="marca-texto">sin facturación ahora</span>{% endif %}</td>
+      {% if c.medida == "casos" %}<td class="num col-opcional">{{ x.casos0|fnum }}</td><td class="num col-opcional">{{ x.casos1|fnum }}</td>{% else %}<td class="num col-opcional">{{ x.costo0|fcop }}</td><td class="num col-opcional">{{ x.costo1|fcop }}</td>{% endif %}
+      <td class="barra-div"><span class="mitad neg">{% if x.delta < 0 %}<i style="width:{{ x.ancho }}%"></i>{% endif %}</span><span class="mitad pos">{% if x.delta > 0 %}<i style="width:{{ x.ancho }}%"></i>{% endif %}</span></td>
+      <td class="num {% if x.delta > 0 %}peor{% else %}mejor{% endif %}"><b>{% if c.medida == "casos" %}{{ x.delta|fdelta }}{% else %}{{ x.delta|fcop:1 }}{% endif %}</b></td>
+    </tr>{% endfor %}
+    {% if c.resto %}<tr class="resto"><td>Otros {{ c.resto.n }}</td><td class="col-opcional"></td><td class="col-opcional"></td><td></td><td class="num">{% if c.medida == "casos" %}{{ c.resto.delta|fdelta }}{% else %}{{ c.resto.delta|fcop:1 }}{% endif %}</td></tr>{% endif %}
+    </tbody></table></div>
+  {% else %}<p class="tenue">Sin variación en este periodo.</p>{% endif %}
+  <p class="ayuda">Los efectos suman exactamente la variación total. Un cambio en un cliente pequeño puede ser azar: el <a href="{% url 'analisis:diagnostico' %}?{{ qs }}">diagnóstico</a> indica cuáles son significativos.</p>
+  {% endwith %}{% endif %}
+  {% endwith %}
+</section>
+
+{# ------------------------------------------------ 6. Concentración #}
+<section class="tarjeta" id="concentracion" aria-labelledby="t-conc">
+  <div class="panel-cabecera"><div><h2 id="t-conc">¿Dónde se concentra? Últimos 12 meses</h2></div></div>
+  <div class="tiles-conc">
+    {% with p=a.pareto_costo %}{% if p %}
+    <div class="tile-conc">
+      <span class="etiqueta">Costo por cliente</span>
+      <strong class="cifra">{{ p.n_corte }} de {{ p.n }} clientes</strong>
+      <p>explican el 80 % del costo.</p>
+      {% grafico_pareto p.curva 0.8 120 %}
+      <p class="ayuda">Mayores: {% for x in p.top|slice:":3" %}{{ x.nombre }} ({{ x.part|fpct:0 }}){% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+    </div>{% endif %}{% endwith %}
+    <div class="tile-conc">
+      <span class="etiqueta">Sectores fuera de lo esperable por su riesgo</span>
+      {% if sectores_fuera %}
+      <ul class="lista-razon">{% for s in sectores_fuera %}
+        <li><span class="nombre">{{ s.nombre }}<small>{{ s.casos|fnum }} casos vs {{ s.esperado|fnum }} esperables</small></span><b class="{% if s.dif > 0 %}peor{% else %}mejor{% endif %}">{{ s.dif|fvar }}</b></li>{% endfor %}</ul>
+      <p class="ayuda">Casos frente a los esperables según las clases de riesgo de cada sector. Solo diferencias con p &lt; 0,01.</p>
+      {% else %}<p>Ningún sector se aleja de forma significativa de lo que explica su clase de riesgo.</p>{% endif %}
+    </div>
+    {% with g=a.graves_12m %}{% if g.pct_costo is not None %}
+    <div class="tile-conc">
+      <span class="etiqueta">Casos graves</span>
+      <strong class="cifra">{{ g.pct_casos|fpct:0 }} de los casos</strong>
+      <p>pero el <b>{{ g.pct_costo|fpct:0 }} del costo</b>.</p>
+      <div class="barra-apilada" role="img" aria-label="Graves: {{ g.pct_casos|fpct:0 }} de los casos y {{ g.pct_costo|fpct:0 }} del costo">
+        <div><span>Casos</span><i><em style="width:{{ g.pct_casos|ancho:1 }}%"></em></i></div>
+        <div><span>Costo</span><i><em style="width:{{ g.pct_costo|ancho:1 }}%"></em></i></div>
+      </div>
+      <p class="ayuda">Costo promedio: {{ g.costo_caso_grave|fcop }} por caso grave vs {{ g.costo_caso_leve|fcop }} por caso leve.</p>
+    </div>{% endif %}{% endwith %}
+  </div>
+  <details class="avanzado"><summary>Ver tablas de detalle (clientes, clases y sectores)</summary>
+    <div class="detalle-conc">
+    {% with p=a.pareto_costo %}{% if p %}
+      <div><h3>Clientes con mayor costo</h3>
+      <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Cliente</th><th class="num">Costo 12 m</th><th class="num">% del total</th><th class="num">Acumulado</th></tr></thead><tbody>
+      {% for c in p.top|slice:":10" %}<tr><td>{{ c.nombre }}</td><td class="num">{{ c.valor|fcop }}</td><td class="num">{{ c.part|fpct }}</td><td class="num">{{ c.acum|fpct:0 }}</td></tr>{% endfor %}</tbody></table></div></div>
+    {% endif %}{% endwith %}
+      <div><h3>Clases de riesgo</h3>
+      <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Clase</th><th class="num">% trabajadores</th><th class="num">% casos</th><th class="num">% costo</th></tr></thead><tbody>
+      {% for s in a.sobre_clase %}<tr><td>{{ s.nombre }}</td><td class="num">{{ s.part_trab|fpct }}</td><td class="num">{{ s.part_casos|fpct }}</td><td class="num">{{ s.part_costo|fpct }}</td></tr>{% endfor %}</tbody></table></div>
+      <p class="ayuda">Las clases de mayor riesgo aportan más casos que su tamaño por definición: muestra peso, no un problema.</p></div>
+      <div class="ancho-completo"><h3>Sectores</h3>
+      <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Sector</th><th class="num">% trabajadores</th><th class="num">% casos</th><th class="num">Casos 12 m</th><th class="num">Esperables por su riesgo</th><th class="num">Razón ajustada</th><th>¿Significativo?</th></tr></thead><tbody>
+      {% for s in a.sobre_sector %}<tr><td>{{ s.nombre }}</td><td class="num">{{ s.part_trab|fpct }}</td><td class="num">{{ s.part_casos|fpct }}</td><td class="num">{{ s.casos|fnum }}</td><td class="num">{{ s.esperado|fnum }}</td>
+        <td class="num {% if s.sig_ajustado %}{% if s.ajustado > 1 %}peor{% else %}mejor{% endif %}{% endif %}"><b>{{ s.ajustado|fnum:2 }}</b></td>
+        <td>{% if s.sig_ajustado %}{% if s.ajustado > 1 %}<span class="peor">Sí, por encima</span>{% else %}<span class="mejor">Sí, por debajo</span>{% endif %}{% else %}<span class="tenue">No</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+    </div>
+  </details>
+</section>
+
+{# ------------------------------------------------ 7. Listas de seguimiento y nivel 2 (plegados) #}
+<section class="tarjeta plegable" id="seguimiento" aria-labelledby="t-rec">
+  <details id="det-seguimiento"><summary><h2 id="t-rec" class="en-linea">Listas de seguimiento</h2> <span class="sub">— clientes críticos recurrentes y clientes en riesgo sin prevención</span></summary>
+  <div class="rejilla-2 compacta">
+    <div id="recurrentes"><h3>Críticos en al menos 3 de los últimos 6 meses</h3>
+      <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Cliente</th><th class="num">Meses críticos</th><th class="num">Tasa 6 m</th><th>¿Crítico este mes?</th></tr></thead><tbody>
+      {% for r in a.criticos_recurrentes %}<tr><td>{{ r.nombre }}<small class="tenue bloque">{{ r.sector }} · clase {{ r.clase }} · {{ r.coordinador }}</small></td><td class="num">{{ r.meses_criticos }} de {{ r.de }}</td><td class="num">{{ r.tasa_periodo|fnum:2 }}</td><td>{% if r.en_mes_actual %}<span class="peor">Sí</span>{% else %}No{% endif %}</td></tr>
+      {% empty %}<tr><td class="tenue" colspan="4">Ningún cliente cumple la condición.</td></tr>{% endfor %}</tbody></table></div></div>
+    <div id="sin_prevencion"><h3>En riesgo y sin prevención en 3 meses</h3>
+      {% if a.cubo.variables and "prevencion" in a.cubo.variables %}
+      <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Cliente</th><th class="num">Casos</th><th class="num">Tasa</th><th>Estado</th></tr></thead><tbody>
+      {% for s in a.sin_prevencion %}<tr><td>{{ s.nombre }}<small class="tenue bloque">{{ s.sector }} · {{ s.coordinador }}</small></td><td class="num">{{ s.casos }}</td><td class="num">{{ s.tasa|fnum:2 }}</td><td><span class="semaforo {{ s.estado }}"><i></i>{{ s.estado|capfirst }}</span></td></tr>
+      {% empty %}<tr><td class="tenue" colspan="4">Todos los clientes en riesgo recibieron prevención.</td></tr>{% endfor %}</tbody></table></div>
+      {% else %}<p class="tenue">No disponible: la fuente actual no incluye actividades de prevención.</p>{% endif %}</div>
+  </div>
+  {% with ap=a.asociacion_prevencion %}{% if ap and ap.diferencia_ponderada is not None %}
+  <p class="hipotesis-nota"><span class="etiqueta-frase hipotesis">Hipótesis</span> Dentro de la misma clase de riesgo, los clientes con prevención en los 3 meses previos tuvieron una tasa {{ ap.diferencia_ponderada|fvar }} frente a los que no. {{ a.texto_prevencion }}</p>
+  {% endif %}{% endwith %}
+  </details>
+</section>
+
+<section class="tarjeta plegable" id="explicativos" aria-labelledby="t-n2">
+  <details><summary><h2 id="t-n2" class="en-linea">Indicadores explicativos</h2> <span class="sub">— nivel 2: por qué los indicadores clave están como están</span></summary>
+  <div class="tabla-contenedor"><table class="tabla"><thead><tr><th>Indicador</th><th class="num">{{ f.mes|fmes:1 }}</th><th class="num">vs mes ant.</th><th class="num">vs mismo mes año ant.</th><th class="num">vs 12 m previos</th><th>12 meses</th></tr></thead><tbody>
+  {% for c in nivel2 %}<tr><td><span title="{{ c.kpi.formula }} · {{ c.kpi.fuente }}">{{ c.kpi.nombre }}</span></td>
+    <td class="num"><b>{{ c|kpi_valor }}</b></td>
+    {% if c.kpi.comparable %}
+    <td class="num {{ c|color_comp:'mes_anterior' }}">{{ c.referencias.mes_anterior.variacion|fvar }}</td>
+    <td class="num {{ c|color_comp:'anio_anterior' }}">{{ c.referencias.anio_anterior.variacion|fvar }}</td>
+    <td class="num {{ c|color_comp:'promedio_12m' }}">{{ c.referencias.promedio_12m.variacion|fvar }}</td>
+    <td class="tendencia-celda">{% sparkline c.serie_valores %}</td>
+    {% else %}<td colspan="4" class="tenue">Foto a la fecha de corte (no comparable entre meses)</td>{% endif %}
+    </tr>{% endfor %}</tbody></table></div>
+  </details>
+</section>
+<p class="ayuda">¿Cómo se calcula cada indicador? Ver <a href="{% url 'analisis:metodologia' %}">Metodología y KPIs</a>.</p>
+{% endif %}{% endif %}
+{% endblock %}

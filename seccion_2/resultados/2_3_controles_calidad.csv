@@ -1,0 +1,12 @@
+control,dimension,severidad,valor,umbral,regla,resultado
+clientes_sin_tasa,Completitud,advertencia,0.0,0.05,% de clientes sin tasa calculable <= umbral,OK
+cobertura_facturacion_mes,Completitud,advertencia,1.0,0.95,% clientes activos con facturación del mes en curso >= umbral,OK
+volumen_casos_dia,Completitud,advertencia,1.22,0.4,casos del día / promedio 28 d >= umbral (caída abrupta de carga),OK
+casos_sin_cliente,Consistencia,bloqueante,0.0,0.0,casos cuyo id_cliente no existe en clientes = 0,OK
+conciliacion_casos_mes,Consistencia,bloqueante,0.0,0.0,suma casos_mes resultado - conteo directo en fuente = 0,OK
+dominio_tipo_y_dias,Validez,bloqueante,0.0,0.0,"tipo fuera de dominio, días/costo negativos o fechas futuras = 0",OK
+duplicados_id_caso,Unicidad,bloqueante,0.0,0.0,id_caso repetidos = 0,OK
+filas_resultado_vs_activos,Completitud,bloqueante,0.0,0.0,filas del resultado - clientes activos = 0 (ni pérdidas ni duplicados),OK
+frescura_casos,Oportunidad,bloqueante,0.0,2.0,días desde el último caso registrado <= umbral,OK
+nulos_campos_clave_casos,Completitud,bloqueante,0.0,0.0,registros con campos clave nulos = 0,OK
+tasa_fuera_de_rango,Validez,bloqueante,0.0,0.0,tasas negativas o > 100 por cada 100 trabajadores = 0,OK

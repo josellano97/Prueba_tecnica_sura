@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Cambiar contraseña{% endblock %}
+{% block encabezado %}Cambiar contraseña{% endblock %}
+{% block subencabezado %}Por seguridad, use al menos 10 caracteres y evite datos personales.{% endblock %}
+{% block contenido %}
+<section class="tarjeta formulario-tarjeta estrecha">
+  <form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    {% include "partials/errores_form.html" %}
+    {% for campo in form %}{% include "partials/campo.html" %}{% endfor %}
+    <div class="acciones-form">
+      <a class="btn" href="{% url 'inicio' %}">Cancelar</a>
+      <button class="btn btn-primario" type="submit">Guardar contraseña</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

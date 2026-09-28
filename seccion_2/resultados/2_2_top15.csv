@@ -1,0 +1,16 @@
+prioridad,id_cliente,nombre,sector,clase_riesgo,puntaje_prioridad,tasa_mensual_90d,tasa_ajustada,casos_90d,casos_prev_90d,graves_90d,graves_abiertos,dias_perdidos_x_trab,costo_x_trab_12m,dias_sin_prevencion,motivo_principal
+1,76,Nogal Minería S.A.S.,Minería y energía,4,95.9,7.91,5.07,22.0,11.0,6.0,7.0,5.16,5268559.0,527,Alta frecuencia de casos
+2,51,Orinoco Construcción S.A.,Construcción,4,90.4,5.28,4.34,32.0,24.0,9.0,9.0,3.14,4489059.0,26,Alta frecuencia de casos
+3,13,Horizonte Construcción Group S.A.S.,Construcción,4,88.8,3.62,3.46,69.0,64.0,23.0,18.0,2.45,2909987.0,74,Casos graves abiertos
+4,93,Farallones Construcción Ltda.,Construcción,5,88.0,5.04,3.56,14.0,15.0,6.0,3.0,4.47,5782092.0,585,Alto costo por trabajador
+5,80,Pacífico Agroindustria Ltda.,Agroindustria,4,85.4,2.62,2.54,10.0,6.0,4.0,5.0,2.97,3702042.0,24,Alto costo por trabajador
+6,61,Nogal Manufactura S.A.S.,Manufactura,4,84.7,3.62,3.28,27.0,16.0,5.0,5.0,1.5,3763602.0,11,Alto costo por trabajador
+7,4,Zenú Manufactura S.A.,Manufactura,4,84.6,4.41,3.42,13.0,5.0,4.0,4.0,3.08,2391556.0,2,Alta frecuencia de casos
+8,115,Tayrona Minería & Cía.,Minería y energía,4,82.9,4.08,3.25,12.0,8.0,4.0,2.0,3.14,3711512.0,6,Casos severos (días perdidos)
+9,110,Orinoco Agroindustria S.A.,Agroindustria,3,82.6,3.19,2.97,62.0,43.0,8.0,7.0,1.08,1626371.0,153,Casos graves abiertos
+10,36,Palmira Construcción Group S.A.S.,Construcción,4,82.1,5.03,3.34,8.0,4.0,3.0,3.0,1.91,2361175.0,5,Alta frecuencia de casos
+11,33,Farallones Manufactura Ltda.,Manufactura,4,81.1,2.65,2.56,9.0,6.0,3.0,2.0,2.26,2085584.0,21,Casos severos (días perdidos)
+12,54,Tequendama Construcción Group S.A.S.,Construcción,4,80.5,2.87,2.83,88.0,68.0,24.0,25.0,1.79,2554730.0,7,Casos graves abiertos
+13,19,Palmira Agroindustria S.A.S.,Agroindustria,4,79.0,3.45,2.96,11.0,6.0,1.0,1.0,1.21,1558935.0,26,Alta frecuencia de casos
+14,111,Andina Transporte S.A.,Transporte y logística,4,76.6,2.17,2.26,13.0,9.0,3.0,3.0,1.88,2288141.0,11,Casos severos (días perdidos)
+15,72,Nogal Agroindustria S.A.S.,Agroindustria,4,76.5,3.61,3.1,14.0,18.0,1.0,3.0,1.02,2828846.0,65,Alta frecuencia de casos

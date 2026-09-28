@@ -1,0 +1,16 @@
+<div class="asistente-mensajes" id="asistente-mensajes" aria-live="polite">
+  <div class="msg msg-agente">Hola 👋 Pregúntame por la cartera o por un cliente. Por ejemplo:</div>
+  <div class="asistente-sugerencias">
+    <button type="button" data-pregunta="¿Cómo va la cartera en el último mes?">¿Cómo va la cartera?</button>
+    <button type="button" data-pregunta="¿Qué clientes están en nivel crítico?">¿Qué clientes están críticos?</button>
+    <button type="button" data-pregunta="¿Cuántos casos tuvo Nogal Minería en el último mes y cuál es su nivel de riesgo?">Casos de Nogal Minería</button>
+    <button type="button" data-pregunta="¿Cuáles son los 5 clientes con más casos en el último mes?">Top 5 clientes</button>
+    <button type="button" data-pregunta="¿Qué significa que un cliente esté en nivel crítico?">¿Qué es nivel crítico?</button>
+  </div>
+</div>
+<form class="asistente-form" id="asistente-form" autocomplete="off">
+  <label class="oculto" for="asistente-texto">Escriba su pregunta</label>
+  <textarea id="asistente-texto" rows="1" maxlength="500" placeholder="Escriba su pregunta…" required></textarea>
+  <button type="submit" class="btn btn-primario" aria-label="Enviar"><svg class="icono" aria-hidden="true"><use href="#i-enviar"></use></svg></button>
+</form>
+<p class="asistente-nota">Asistente de IA: las cifras vienen del tablero, pero verifique lo importante con el enlace que acompaña cada respuesta.</p>

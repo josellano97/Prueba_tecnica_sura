@@ -1,0 +1,105 @@
+id_cliente,nombre,sector,clase_riesgo,total_casos,casos_graves,costo_total,trabajadores_prom,pct_graves,costo_x_trab,ranking_clase,periodos_facturados,casos_sin_costo
+54,Tequendama Construcción Group S.A.S.,Construcción,4,318,83.0,2618598000.0,1025.0,26.1,2554730.0,1,12,0.0
+13,Horizonte Construcción Group S.A.S.,Construcción,4,257,60.0,1790612000.0,615.3,23.3,2909987.0,2,12,0.0
+12,Samán Manufactura & Cía.,Manufactura,5,128,41.0,1131405000.0,371.2,32.0,3048115.0,1,11,0.0
+110,Orinoco Agroindustria S.A.,Agroindustria,3,190,33.0,997101000.0,613.1,17.4,1626371.0,1,12,0.0
+51,Orinoco Construcción S.A.,Construcción,4,116,33.0,894445000.0,199.3,28.4,4489059.0,3,12,0.0
+61,Nogal Manufactura S.A.S.,Manufactura,4,90,28.0,864374000.0,229.7,31.1,3763602.0,4,12,0.0
+21,Orinoco Manufactura & Cía.,Manufactura,3,115,21.0,745955000.0,556.0,18.3,1341646.0,2,12,0.0
+97,Sabana Construcción Ltda.,Construcción,4,94,23.0,696428000.0,623.0,24.5,1117862.0,5,6,0.0
+57,Zenú Manufactura Ltda.,Manufactura,5,78,23.0,666803000.0,197.7,29.5,3373371.0,2,12,0.0
+22,Farallones Agroindustria S.A.,Agroindustria,3,107,20.0,623757000.0,347.7,18.7,1794124.0,3,12,0.0
+42,Magdalena Construcción S.A.S.,Construcción,4,119,20.0,623175000.0,350.4,16.8,1778383.0,6,12,0.0
+56,Samán Construcción S.A.S.,Construcción,4,82,19.0,569118000.0,413.7,23.2,1375789.0,7,12,0.0
+93,Farallones Construcción Ltda.,Construcción,5,70,23.0,566645000.0,98.0,32.9,5782092.0,3,12,0.0
+112,Tayrona Transporte S.A.,Transporte y logística,4,75,17.0,552350000.0,320.7,22.7,1722505.0,8,12,0.0
+11,Caribe Manufactura S.A.,Manufactura,5,62,22.0,525544000.0,294.6,35.5,1784025.0,4,12,0.0
+27,Orinoco Minería & Cía.,Minería y energía,4,91,12.0,519111000.0,450.2,13.2,1153153.0,9,12,0.0
+95,Horizonte Minería & Cía.,Minería y energía,5,58,16.0,480803000.0,333.2,27.6,1443131.0,5,12,0.0
+76,Nogal Minería S.A.S.,Minería y energía,4,56,14.0,480317000.0,91.2,25.0,5268559.0,10,12,0.0
+111,Andina Transporte S.A.,Transporte y logística,4,54,14.0,454196000.0,198.5,25.9,2288141.0,11,12,0.0
+80,Pacífico Agroindustria Ltda.,Agroindustria,4,33,10.0,444245000.0,120.0,30.3,3702042.0,12,12,0.0
+104,Tayrona Manufactura S.A.,Manufactura,5,54,18.0,433641000.0,193.8,33.3,2237185.0,6,12,0.0
+72,Nogal Agroindustria S.A.S.,Agroindustria,4,58,14.0,371286000.0,131.3,24.1,2828846.0,13,12,0.0
+115,Tayrona Minería & Cía.,Minería y energía,4,41,12.0,362491000.0,97.7,29.3,3711512.0,14,12,0.0
+91,Arrayán Transporte S.A.,Transporte y logística,3,49,9.0,292695000.0,207.5,18.4,1410578.0,4,12,0.0
+34,Cordillera Transporte Ltda.,Transporte y logística,3,36,9.0,276337000.0,110.2,25.0,2508354.0,5,12,0.0
+109,Tequendama Agroindustria Group S.A.S.,Agroindustria,3,42,9.0,273757000.0,179.7,21.4,1523180.0,6,11,0.0
+45,Andina Salud Ltda.,Salud,3,32,8.0,269748000.0,179.3,25.0,1504870.0,7,12,0.0
+10,Caribe Manufactura S.A.S.,Manufactura,4,40,11.0,262656000.0,133.8,27.5,1962560.0,15,12,0.0
+62,Orinoco Construcción & Cía.,Construcción,4,47,7.0,252479000.0,267.4,14.9,944141.0,16,12,0.0
+83,Andina Servicios Group S.A.S.,Servicios profesionales,2,39,6.0,233828000.0,142.6,15.4,1639939.0,1,12,0.0
+98,Pacífico Agroindustria S.A.,Agroindustria,4,37,6.0,232966000.0,80.3,16.2,2899992.0,17,12,0.0
+4,Zenú Manufactura S.A.,Manufactura,4,34,6.0,231383000.0,96.8,17.6,2391556.0,18,12,0.0
+33,Farallones Manufactura Ltda.,Manufactura,4,27,6.0,231326000.0,110.9,22.2,2085584.0,19,12,0.0
+84,Horizonte Transporte Ltda.,Transporte y logística,4,35,7.0,197327000.0,226.7,20.0,870560.0,20,12,0.0
+1,Horizonte Manufactura S.A.,Manufactura,4,25,5.0,190339000.0,186.4,20.0,1021041.0,21,12,0.0
+82,Andina Agroindustria & Cía.,Agroindustria,3,31,5.0,162559000.0,201.3,16.1,807747.0,8,12,0.0
+19,Palmira Agroindustria S.A.S.,Agroindustria,4,29,6.0,160960000.0,103.3,20.7,1558935.0,22,12,0.0
+28,Sabana Agroindustria Ltda.,Agroindustria,3,10,4.0,153948000.0,77.7,40.0,1982163.0,9,12,0.0
+35,Zenú Construcción Ltda.,Construcción,4,27,4.0,147936000.0,155.9,14.8,948815.0,23,12,0.0
+120,Ceiba Servicios Ltda.,Servicios profesionales,1,29,3.0,144721000.0,903.7,10.3,160149.0,1,12,0.0
+16,Andina Transporte Ltda.,Transporte y logística,3,10,4.0,141860000.0,91.7,40.0,1547564.0,10,12,0.0
+66,Palmira Manufactura Group S.A.S.,Manufactura,4,17,5.0,137237000.0,146.9,29.4,934115.0,24,12,0.0
+39,Farallones Salud Ltda.,Salud,2,24,3.0,131904000.0,248.8,12.5,530267.0,2,12,0.0
+101,Quimbaya Construcción & Cía.,Construcción,5,14,5.0,124707000.0,60.9,35.7,2047174.0,7,12,0.0
+36,Palmira Construcción Group S.A.S.,Construcción,4,19,7.0,124552000.0,52.8,36.8,2361175.0,25,12,0.0
+86,Altamira Construcción S.A.S.,Construcción,4,12,4.0,117424000.0,49.1,33.3,2392340.0,26,12,0.0
+113,Palmira Servicios & Cía.,Servicios profesionales,2,11,4.0,111645000.0,89.2,36.4,1252093.0,3,12,0.0
+14,Nogal Manufactura S.A.,Manufactura,5,35,3.0,105789000.0,111.0,8.6,953054.0,8,12,0.0
+40,Tayrona Comercio Ltda.,Comercio,2,37,3.0,99429000.0,466.0,8.1,213367.0,4,12,0.0
+17,Palmira Manufactura S.A.,Manufactura,3,11,2.0,96938000.0,58.2,18.2,1666556.0,11,12,0.0
+90,Palmira Salud Group S.A.S.,Salud,3,39,2.0,96826000.0,830.7,5.1,116564.0,12,6,0.0
+31,Guadua Salud Group S.A.S.,Salud,3,9,3.0,94627000.0,114.4,33.3,827039.0,13,12,0.0
+59,Horizonte Transporte & Cía.,Transporte y logística,3,14,4.0,92886000.0,107.6,28.6,863387.0,14,12,0.0
+79,Orinoco Salud & Cía.,Salud,3,18,3.0,90308000.0,76.3,16.7,1183074.0,15,12,0.0
+18,Ceiba Agroindustria Ltda.,Agroindustria,4,9,3.0,88828000.0,160.8,33.3,552585.0,27,12,0.0
+48,Samán Minería S.A.S.,Minería y energía,5,15,3.0,88648000.0,75.8,20.0,1170271.0,9,12,0.0
+55,Arrayán Manufactura Group S.A.S.,Manufactura,3,10,3.0,86955000.0,121.1,30.0,718142.0,16,12,0.0
+53,Orinoco Transporte Ltda.,Transporte y logística,3,16,3.0,86012000.0,105.9,18.8,812072.0,17,12,0.0
+68,Tequendama Transporte Ltda.,Transporte y logística,3,29,2.0,82414000.0,102.4,6.9,804693.0,18,12,0.0
+89,Guadua Transporte S.A.S.,Transporte y logística,3,13,3.0,78952000.0,81.1,23.1,973714.0,19,12,0.0
+9,Andina Manufactura Ltda.,Manufactura,4,13,2.0,76129000.0,60.4,15.4,1260066.0,28,12,0.0
+73,Ceiba Transporte S.A.S.,Transporte y logística,3,13,2.0,73801000.0,155.5,15.4,474743.0,20,11,0.0
+116,Ceiba Agroindustria Group S.A.S.,Agroindustria,4,10,2.0,69394000.0,63.7,20.0,1088922.0,29,11,0.0
+85,Nogal Transporte S.A.S.,Transporte y logística,3,12,2.0,68018000.0,79.2,16.7,859175.0,21,12,0.0
+26,Tequendama Salud S.A.S.,Salud,2,25,1.0,67142000.0,246.2,4.0,272750.0,5,12,0.0
+24,Guadua Manufactura S.A.,Manufactura,5,17,2.0,52208000.0,24.4,11.8,2138212.0,10,12,0.0
+63,Palmira Manufactura S.A.S.,Manufactura,4,11,2.0,45164000.0,169.9,18.2,265801.0,30,12,0.0
+103,Palmira Transporte Ltda.,Transporte y logística,4,4,1.0,44763000.0,52.0,25.0,860827.0,31,12,0.0
+81,Farallones Construcción Group S.A.S.,Construcción,5,13,1.0,44124000.0,86.0,7.7,513070.0,11,12,0.0
+3,Sabana Comercio & Cía.,Comercio,2,5,1.0,37712000.0,37.3,20.0,1010143.0,6,12,0.0
+52,Nogal Salud S.A.,Salud,2,8,2.0,36316000.0,59.8,25.0,607799.0,7,12,0.0
+6,Tayrona Comercio S.A.S.,Comercio,1,7,1.0,36098000.0,127.4,14.3,283307.0,2,12,0.0
+71,Caribe Servicios & Cía.,Servicios profesionales,1,8,1.0,35999000.0,382.1,12.5,94218.0,3,12,0.0
+44,Altamira Manufactura S.A.S.,Manufactura,3,5,1.0,35431000.0,64.8,20.0,547197.0,22,12,0.0
+43,Guadua Comercio & Cía.,Comercio,2,9,1.0,32900000.0,89.2,11.1,368972.0,8,12,0.0
+106,Palmira Salud Ltda.,Salud,3,2,1.0,32872000.0,47.8,50.0,687220.0,23,6,0.0
+119,Farallones Manufactura & Cía.,Manufactura,4,4,2.0,32101000.0,27.8,50.0,1153329.0,32,12,0.0
+75,Arrayán Construcción & Cía.,Construcción,5,8,1.0,31595000.0,49.4,12.5,639359.0,12,12,0.0
+60,Farallones Servicios Group S.A.S.,Servicios profesionales,2,1,1.0,31114000.0,12.7,100.0,2456368.0,9,12,0.0
+32,Guadua Servicios & Cía.,Servicios profesionales,2,1,1.0,30295000.0,76.8,100.0,394295.0,10,12,0.0
+102,Sabana Servicios S.A.,Servicios profesionales,2,5,1.0,27904000.0,106.5,20.0,262009.0,11,12,0.0
+114,Samán Transporte Group S.A.S.,Transporte y logística,3,4,1.0,27120000.0,37.7,25.0,720000.0,24,12,0.0
+77,Orinoco Agroindustria & Cía.,Agroindustria,3,9,1.0,27031000.0,59.3,11.1,455579.0,25,12,0.0
+69,Palmira Transporte Group S.A.S.,Transporte y logística,3,13,0.0,25836000.0,115.3,0.0,224174.0,26,12,0.0
+29,Horizonte Servicios Group S.A.S.,Servicios profesionales,1,7,1.0,24282000.0,167.3,14.3,145112.0,4,12,0.0
+30,Samán Comercio Ltda.,Comercio,1,10,0.0,21695000.0,342.8,0.0,63281.0,5,6,0.0
+118,Quimbaya Transporte S.A.S.,Transporte y logística,4,2,1.0,21216000.0,51.9,50.0,409124.0,33,7,0.0
+67,Pacífico Comercio Group S.A.S.,Comercio,2,8,1.0,20799000.0,86.1,12.5,241615.0,12,12,0.0
+117,Altamira Servicios & Cía.,Servicios profesionales,1,9,0.0,18797000.0,475.2,0.0,39559.0,6,12,0.0
+58,Magdalena Salud Ltda.,Salud,2,9,0.0,16263000.0,116.4,0.0,139696.0,13,12,0.0
+94,Tayrona Salud S.A.,Salud,2,2,1.0,13230000.0,52.3,50.0,252803.0,14,12,0.0
+47,Pacífico Transporte S.A.,Transporte y logística,3,8,0.0,11822000.0,50.2,0.0,235654.0,27,12,0.0
+108,Andina Salud S.A.S.,Salud,2,5,0.0,6647000.0,40.8,0.0,163117.0,15,12,0.0
+99,Horizonte Servicios & Cía.,Servicios profesionales,1,4,0.0,6117000.0,113.1,0.0,54093.0,7,12,0.0
+105,Farallones Comercio & Cía.,Comercio,1,4,0.0,5837000.0,78.4,0.0,74436.0,8,12,0.0
+5,Farallones Transporte & Cía.,Transporte y logística,4,2,0.0,3104000.0,12.3,0.0,251676.0,34,12,0.0
+107,Sabana Comercio S.A.,Comercio,1,4,0.0,2825000.0,199.6,0.0,14154.0,9,12,0.0
+96,Pacífico Comercio S.A.S.,Comercio,2,2,0.0,2771000.0,37.2,0.0,74556.0,16,12,0.0
+38,Arrayán Servicios Ltda.,Servicios profesionales,1,1,0.0,2708000.0,85.0,0.0,31859.0,10,12,0.0
+23,Andina Comercio S.A.S.,Comercio,1,2,0.0,2435000.0,130.1,0.0,18719.0,11,12,0.0
+64,Cordillera Comercio S.A.,Comercio,1,2,0.0,2298000.0,108.2,0.0,21245.0,12,12,0.0
+46,Sabana Manufactura & Cía.,Manufactura,3,2,0.0,2206000.0,23.0,0.0,95913.0,28,12,0.0
+87,Magdalena Salud Group S.A.S.,Salud,2,1,0.0,2058000.0,42.0,0.0,49000.0,17,12,0.0
+65,Guadua Comercio S.A.,Comercio,1,2,0.0,1854000.0,50.5,0.0,36713.0,13,12,0.0

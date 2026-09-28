@@ -1,0 +1,65 @@
+{
+  "name": "Tema SURA siniestralidad",
+  "dataColors": [
+    "#0055A0",
+    "#00ABC4",
+    "#EB6834",
+    "#1C5CAB",
+    "#86B6EF",
+    "#6B7684",
+    "#0CA30C",
+    "#D99A00",
+    "#104281",
+    "#9EC5F4"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#16212E",
+  "tableAccent": "#0055A0",
+  "good": "#0CA30C",
+  "neutral": "#D99A00",
+  "bad": "#D03B3B",
+  "maximum": "#104281",
+  "center": "#86B6EF",
+  "minimum": "#EEF3F9",
+  "textClasses": {
+    "callout": {
+      "fontFace": "'Segoe UI Semibold', wf_segoe-ui_semibold, helvetica, arial, sans-serif",
+      "color": "#16212E"
+    },
+    "title": {
+      "fontFace": "'Segoe UI Semibold', wf_segoe-ui_semibold, helvetica, arial, sans-serif",
+      "color": "#0055A0",
+      "fontSize": 12
+    },
+    "header": {
+      "fontFace": "'Segoe UI Semibold', wf_segoe-ui_semibold, helvetica, arial, sans-serif",
+      "color": "#0055A0"
+    },
+    "label": {
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#4A5666"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#DFE4EA"
+              }
+            },
+            "radius": 10
+          }
+        ],
+        "dropShadow": [
+          {
+            "show": false
+          }
+        ]
+      }
+    }
+  }
+}

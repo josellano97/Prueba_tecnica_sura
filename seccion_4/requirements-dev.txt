@@ -1,0 +1,4 @@
+# Solo para desarrollo, pruebas de navegador y validación (no se instala en producción)
+-r requirements.txt
+playwright==1.63.0             # prueba de extremo a extremo con Microsoft Edge (tests_e2e/)
+pandas==2.2.3                  # validación independiente de la capa analítica (herramientas/)

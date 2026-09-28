@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}{% if form.es_nuevo %}Nuevo usuario{% else %}Editar usuario{% endif %}{% endblock %}
+{% block encabezado %}{% if form.es_nuevo %}Nuevo usuario{% else %}Editar «{{ form.instance.username }}»{% endif %}{% endblock %}
+{% block subencabezado %}<a href="{% url 'cuentas:usuarios' %}">← Volver a usuarios</a>{% endblock %}
+{% block contenido %}
+<form method="post" class="formulario" novalidate>
+  {% csrf_token %}
+  {% include "partials/errores_form.html" %}
+  <div class="rejilla-form">
+    <section class="tarjeta formulario-tarjeta">
+      <h2>Datos de la cuenta</h2>
+      <div class="campos-2">
+        {% with campo=form.username %}{% include "partials/campo.html" %}{% endwith %}
+        {% with campo=form.email %}{% include "partials/campo.html" %}{% endwith %}
+        {% with campo=form.first_name %}{% include "partials/campo.html" %}{% endwith %}
+        {% with campo=form.last_name %}{% include "partials/campo.html" %}{% endwith %}
+        {% with campo=form.cargo %}{% include "partials/campo.html" %}{% endwith %}
+      </div>
+      <h2>Contraseña</h2>
+      <div class="campos-2">
+        {% with campo=form.contrasena1 %}{% include "partials/campo.html" %}{% endwith %}
+        {% with campo=form.contrasena2 %}{% include "partials/campo.html" %}{% endwith %}
+      </div>
+      <h2>Estado</h2>
+      {% with campo=form.is_active %}{% include "partials/campo.html" %}{% endwith %}
+      {% if form.is_staff %}{% with campo=form.is_staff %}{% include "partials/campo.html" %}{% endwith %}{% endif %}
+    </section>
+
+    <section class="tarjeta formulario-tarjeta">
+      <h2>Rol y alcance</h2>
+      <fieldset class="grupo-casillas">
+        <legend>{{ form.roles.label }}</legend>
+        {% for opcion in form.roles %}<label class="casilla">{{ opcion.tag }} <span>{{ opcion.choice_label }}</span></label>{% endfor %}
+        {% for e in form.roles.errors %}<small class="error-campo">{{ e }}</small>{% endfor %}
+      </fieldset>
+      {% with campo=form.coordinador %}{% include "partials/campo.html" %}{% endwith %}
+      <details class="avanzado" {% if form.permisos.value %}open{% endif %}>
+        <summary>Permisos adicionales (opcional)</summary>
+        <p class="ayuda">{{ form.permisos.help_text }} Lo recomendable es gestionar el acceso con roles.</p>
+        <fieldset class="grupo-casillas">
+          <legend class="sr">{{ form.permisos.label }}</legend>
+          {% for opcion in form.permisos %}<label class="casilla">{{ opcion.tag }} <span>{{ opcion.choice_label }}</span></label>{% endfor %}
+        </fieldset>
+      </details>
+    </section>
+  </div>
+  <div class="acciones-form">
+    <a class="btn" href="{% url 'cuentas:usuarios' %}">Cancelar</a>
+    <button class="btn btn-primario" type="submit">{% if form.es_nuevo %}Crear usuario{% else %}Guardar cambios{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

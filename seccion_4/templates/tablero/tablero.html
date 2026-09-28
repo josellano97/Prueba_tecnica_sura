@@ -1,0 +1,139 @@
+{% extends "base.html" %}{% load static %}
+{% block titulo %}Tablero{% endblock %}
+{% block encabezado %}Monitoreo de siniestralidad{% endblock %}
+{% block subencabezado %}Casos, costo y tasa de incidencia por mes cerrado{% if user.perfil.coordinador and not perms.tablero.ver_todos_los_clientes %} · clientes de {{ user.perfil.coordinador }}{% endif %}{% endblock %}
+{% block contenido %}
+{% if not hay_datos %}
+  <section class="tarjeta estado-vacio">
+    <svg class="icono grande" aria-hidden="true"><use href="#i-info"></use></svg>
+    <h2>Aún no hay datos cargados</h2>
+    <p>Un administrador debe cargarlos con <code>python manage.py cargar_datos_demo</code>.</p>
+  </section>
+{% elif sin_alcance %}
+  <section class="tarjeta estado-vacio">
+    <svg class="icono grande" aria-hidden="true"><use href="#i-candado"></use></svg>
+    <h2>No tiene clientes asignados</h2>
+    <p>Su usuario puede ver el tablero, pero no está asociado a ningún coordinador ni tiene permiso para ver todos los clientes. Solicite al administrador que complete su perfil.</p>
+  </section>
+{% else %}
+<div id="tablero" class="tablero"
+     data-url-datos="{% url 'tablero:datos' %}"
+     data-url-exportar="{% if puede_exportar %}{% url 'tablero:exportar_top' %}{% endif %}">
+
+  <section class="tarjeta filtros" aria-label="Filtros del tablero">
+    <button type="button" class="btn-filtros-movil" data-plegar-filtros aria-expanded="false">
+      <span><b>Filtros y mes de análisis</b></span><span class="flecha-plegar" aria-hidden="true">▾</span>
+    </button>
+    <div class="filtros-campos">
+      <div class="campo">
+        <label for="f-mes">Mes de análisis</label>
+        <select id="f-mes" name="mes">
+          {% for valor, etiqueta in periodos %}<option value="{{ valor }}">{{ etiqueta|capfirst }}</option>{% endfor %}
+        </select>
+      </div>
+      {% if coordinadores|length > 1 %}
+      <div class="campo">
+        <label for="f-coordinador">Coordinador</label>
+        <select id="f-coordinador" name="coordinador">
+          <option value="">Todos</option>
+          {% for c in coordinadores %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="campo">
+        <label for="f-sector">Sector</label>
+        <select id="f-sector" name="sector">
+          <option value="">Todos</option>
+          {% for s in sectores %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <span class="etiqueta" id="l-clase">Clase de riesgo</span>
+        <div class="chips" role="group" aria-labelledby="l-clase">
+          {% for c in clases %}<button type="button" class="chip" data-clase="{{ c }}" aria-pressed="true" title="Clase de riesgo {{ c }}">{{ c }}</button>{% endfor %}
+        </div>
+      </div>
+      <div class="campo campo-accion">
+        <button type="button" class="btn" id="btn-limpiar"><svg class="icono pequeno" aria-hidden="true"><use href="#i-reiniciar"></use></svg>Limpiar filtros</button>
+      </div>
+    </div>
+    <p class="filtros-activos" id="filtros-activos" aria-live="polite"></p>
+  </section>
+
+  <div class="aviso aviso-error" id="error-datos" role="alert" hidden>
+    <svg class="icono" aria-hidden="true"><use href="#i-alerta"></use></svg>
+    <span id="error-texto">No fue posible cargar los datos.</span>
+    <button type="button" class="btn btn-pequeno" id="btn-reintentar">Reintentar</button>
+  </div>
+
+  <div id="contenido-tablero" aria-busy="true">
+    <section class="tarjeta resumen" id="resumen" aria-live="polite"><span class="esqueleto linea"></span></section>
+
+    <section class="kpis" aria-label="Indicadores clave">
+      <article class="tarjeta kpi" id="kpi-casos"><span class="esqueleto bloque"></span></article>
+      <article class="tarjeta kpi" id="kpi-costo"><span class="esqueleto bloque"></span></article>
+      <article class="tarjeta kpi" id="kpi-tasa"><span class="esqueleto bloque"></span></article>
+      <article class="tarjeta kpi" id="kpi-criticos"><span class="esqueleto bloque"></span></article>
+    </section>
+
+    <div class="rejilla-2">
+      <section class="tarjeta panel">
+        <div class="panel-cabecera">
+          <div>
+            <h2 id="t-tendencia">Tendencia mensual</h2>
+            <p class="sub">Últimos 12 meses hasta el mes de análisis · línea punteada = promedio histórico</p>
+          </div>
+          <div class="segmentado" role="group" aria-label="Métrica de la tendencia" id="seg-metrica">
+            <button type="button" data-metrica="casos" aria-pressed="true">Casos</button>
+            <button type="button" data-metrica="costo" aria-pressed="false">Costo</button>
+            <button type="button" data-metrica="tasa" aria-pressed="false">Tasa</button>
+          </div>
+        </div>
+        <div class="grafico" id="g-tendencia"></div>
+        <div class="leyenda" id="l-tendencia"></div>
+      </section>
+
+      <section class="tarjeta panel">
+        <div class="panel-cabecera"><div><h2>Casos por tipo</h2><p class="sub">Participación en cantidad de casos y en costo del mes</p></div></div>
+        <div class="grafico" id="g-tipo"></div>
+        <div class="leyenda"><span><i class="muestra serie-1"></i>Leve</span><span><i class="muestra serie-2"></i>Grave</span></div>
+        <div class="panel-cabecera separado"><div><h2>Casos por clase de riesgo</h2><p class="sub">Barras = casos del mes · etiqueta = tasa por cada 100 trabajadores</p></div></div>
+        <div class="grafico" id="g-clase"></div>
+      </section>
+    </div>
+
+    <section class="tarjeta panel">
+      <div class="panel-cabecera">
+        <div><h2>Top 10 clientes con más casos</h2><p class="sub" id="sub-top"></p></div>
+        <div class="panel-acciones">
+          <div class="segmentado" role="group" aria-label="Periodo de la tabla" id="seg-top">
+            <button type="button" data-periodo="mes" aria-pressed="true">Mes</button>
+            <button type="button" data-periodo="12m" aria-pressed="false">Últimos 12 meses</button>
+          </div>
+          {% if puede_exportar %}
+          <a class="btn" id="btn-exportar" href="{% url 'tablero:exportar_top' %}" download>
+            <svg class="icono pequeno" aria-hidden="true"><use href="#i-descargar"></use></svg>Exportar CSV</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="tabla-contenedor" id="tabla-top"></div>
+    </section>
+  </div>
+
+  <details class="tarjeta ayuda">
+    <summary>¿Cómo leer este tablero?</summary>
+    <dl>
+      <dt>Casos del mes</dt><dd>Incidentes ocurridos en el mes de análisis.</dd>
+      <dt>Costo total</dt><dd>Suma del costo de los casos del mes, en pesos colombianos (M = millones).</dd>
+      <dt>Tasa de incidencia</dt><dd>Casos del mes ÷ trabajadores activos del mes × 100. Una tasa de 2 significa 2 casos por cada 100 trabajadores.</dd>
+      <dt>Clasificación</dt><dd><b>Crítico</b> tasa &gt; {{ configuracion.umbral_critico|floatformat:"-2" }} · <b>Moderado</b> desde {{ configuracion.umbral_moderado|floatformat:"-2" }} · <b>Bajo</b> por debajo.</dd>
+      <dt>Variación</dt><dd>Contra el mes inmediatamente anterior: ▲ rojo cuando empeora y ▼ verde cuando mejora.</dd>
+      <dt>Promedio histórico</dt><dd>Promedio mensual de los meses disponibles hasta el mes de análisis, con los mismos filtros.</dd>
+      <dt>Alcance</dt><dd>{% if perms.tablero.ver_todos_los_clientes %}Usted ve todos los clientes.{% else %}Usted ve solo los clientes de su coordinador asignado.{% endif %}</dd>
+    </dl>
+  </details>
+</div>
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if hay_datos and not sin_alcance %}<script type="module" src="{% static 'js/tablero/tablero.js' %}"></script>{% endif %}{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load analitica %}
+{% block titulo %}Calidad de datos{% endblock %}
+{% block encabezado %}Calidad de datos{% endblock %}
+{% block subencabezado %}Qué problemas tienen los datos, cómo se trataron y qué indicadores afectan{% endblock %}
+{% block contenido %}
+{% if not carga %}
+<section class="tarjeta estado-vacio"><h2>No hay cargas registradas</h2><p>Cargue datos con <code>python manage.py cargar_datos_proyecto</code>.</p></section>
+{% else %}
+<section class="tarjeta">
+  <div class="rejilla-3 compacta">
+    <div><span class="etiqueta">Fuente</span><strong>{{ carga.descripcion }}</strong></div>
+    <div><span class="etiqueta">Fecha de corte</span><strong>{{ carga.fecha_corte|date:"d/m/Y" }}</strong><small>meses analizados: {{ carga.periodo_desde|date:"m/Y" }} a {{ carga.periodo_hasta|date:"m/Y" }}</small></div>
+    <div><span class="etiqueta">Cargada</span><strong>{{ carga.creada|date:"d/m/Y H:i" }}</strong></div>
+    {% for etiqueta, v in resumen_legible %}<div><span class="etiqueta">{{ etiqueta }}</span><strong>{{ v|fnum }}</strong></div>{% endfor %}
+  </div>
+  <p class="ayuda">Hallazgos: {{ conteo.critico }} críticos · {{ conteo.advertencia }} advertencias · {{ conteo.info }} informativos.
+  Ningún problema se ocultó: cada uno tiene un tratamiento explícito y se indica qué indicadores afecta.</p>
+</section>
+<section class="tarjeta">
+  <div class="tabla-contenedor"><table class="tabla">
+    <thead><tr><th>Severidad</th><th>Hallazgo</th><th class="num">Registros</th><th>Tratamiento</th><th>Afecta</th></tr></thead>
+    <tbody>{% for h in hallazgos %}
+      <tr><td><span class="severidad sev-{{ h.severidad }}">{% if h.severidad == "critico" %}Crítico{% elif h.severidad == "advertencia" %}Advertencia{% else %}Informativo{% endif %}</span></td>
+        <td><b>{{ h.descripcion }}</b><small class="tenue bloque">{{ h.codigo }}{% if h.ejemplos %} · ejemplos (id): {{ h.ejemplos|join:", " }}{% endif %}</small></td>
+        <td class="num">{% if h.registros %}{{ h.registros|fnum }}{% else %}–{% endif %}</td><td>{{ h.tratamiento }}</td><td>{{ h.afecta|join:", " }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="vacio">Sin hallazgos.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if resumen.no_utilizados %}<p class="ayuda">No utilizado: {{ resumen.no_utilizados|join:"; " }}.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

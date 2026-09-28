@@ -1,0 +1,7 @@
+# Dependencias de ejecución (Python 3.11+). Cada una tiene una razón:
+Django==5.2.17                 # framework (versión LTS, soporte hasta abril de 2028)
+gunicorn==26.2.0               # servidor WSGI de producción (Azure App Service Linux)
+whitenoise==6.12.0             # sirve los archivos estáticos sin un servidor web adicional
+dj-database-url==3.1.2         # configura la base de datos desde DATABASE_URL
+psycopg[binary]==3.3.6         # controlador PostgreSQL (Azure Database for PostgreSQL)
+python-dotenv==1.2.3           # lee .env en desarrollo local

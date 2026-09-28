@@ -1,0 +1,31 @@
+/// Tabla de seguridad (RLS): qué clientes ve cada correo. Se alimenta de la asignación vigente de coordinadores.
+table 'Seguridad Asignacion'
+	isHidden
+	lineageTag: efe51832-95c9-5af3-ab71-db5cc6120dc7
+
+	column id_cliente
+		dataType: int64
+		formatString: 0
+		lineageTag: 272d2cfe-721d-57e3-95f1-242f7ee2d96f
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	column Correo
+		dataType: string
+		lineageTag: 0ab45582-0af3-5e09-8565-9e3014327abf
+		summarizeBy: none
+		sourceColumn: Correo
+
+	partition 'Seguridad Asignacion' = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(RutaDatos & "asignacion_coordinador.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    Tipos = Table.TransformColumnTypes(Encabezados, {{"id_cliente", Int64.Type}, {"correo", type text}}, "en-US"),
+				    Seleccion = Table.SelectColumns(Tipos, {"id_cliente", "correo"}),
+				    Minus = Table.TransformColumns(Seleccion, {{"correo", Text.Lower, type text}}),
+				    Renombradas = Table.RenameColumns(Minus, {{"correo", "Correo"}})
+				in
+				    Renombradas
+

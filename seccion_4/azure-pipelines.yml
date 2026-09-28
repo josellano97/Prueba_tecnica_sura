@@ -1,0 +1,165 @@
+# =============================================================================
+# CI/CD en Azure DevOps para la aplicación Django "Monitoreo de siniestralidad".
+#
+#   Etapa 1 · Validar   (cada push y cada pull request)
+#       obtener código → Python 3.11 → dependencias → validaciones → pruebas →
+#       archivos estáticos → paquete .zip → artefacto
+#   Etapa 2 · Desplegar (solo rama main, tras aprobación del ambiente "produccion")
+#       configurar App Settings → desplegar el .zip en Azure App Service → sondeo de salud
+#
+# Antes de la primera ejecución configure (ver README, sección "Azure DevOps"):
+#   1. Conexión de servicio (Project settings › Service connections › Azure Resource Manager)
+#      y escriba su nombre en la variable azureServiceConnection de abajo.
+#   2. Grupo de variables "monitoreo-produccion" (Pipelines › Library) con:
+#        webAppName, resourceGroup, djangoAllowedHosts,
+#        djangoSecretKey (secreto 🔒), databaseUrl (secreto 🔒)
+#   3. Ambiente "produccion" (Pipelines › Environments) con aprobación manual.
+# =============================================================================
+
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include: ["seccion_4/*"]
+
+pr:
+  branches:
+    include: [main]
+
+variables:
+  pythonVersion: "3.11"
+  # Carpeta de la aplicación dentro del repositorio. Use "." si el repositorio contiene solo esta aplicación.
+  rutaApp: "seccion_4"
+  # Nombre de la conexión de servicio de Azure (debe conocerse al encolar el pipeline). REEMPLAZAR.
+  azureServiceConnection: "REEMPLAZAR-conexion-azure"
+
+stages:
+  # ---------------------------------------------------------------------------
+  - stage: Validar
+    displayName: Validar y empaquetar
+    jobs:
+      - job: Build
+        displayName: Pruebas y artefacto
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: UsePythonVersion@0
+            displayName: Usar Python $(pythonVersion)
+            inputs:
+              versionSpec: $(pythonVersion)
+
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            displayName: Instalar dependencias
+            workingDirectory: $(rutaApp)
+
+          - script: |
+              python manage.py check
+              python manage.py makemigrations --check --dry-run
+            displayName: Validar configuración y migraciones pendientes
+            workingDirectory: $(rutaApp)
+            env:
+              DJANGO_SETTINGS_MODULE: config.settings.dev
+
+          - script: |
+              export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(64))')"
+              python manage.py check --deploy --fail-level WARNING
+            displayName: Validar configuración de producción (check --deploy)
+            workingDirectory: $(rutaApp)
+            env:
+              DJANGO_SETTINGS_MODULE: config.settings.prod
+              DJANGO_ALLOWED_HOSTS: ci.invalid
+
+          - script: python manage.py test --verbosity 2
+            displayName: Ejecutar pruebas automáticas
+            workingDirectory: $(rutaApp)
+
+          - script: |
+              export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(64))')"
+              python manage.py collectstatic --noinput
+            displayName: Preparar archivos estáticos (collectstatic)
+            workingDirectory: $(rutaApp)
+            env:
+              DJANGO_SETTINGS_MODULE: config.settings.prod
+              DJANGO_ALLOWED_HOSTS: ci.invalid
+
+          - task: CopyFiles@2
+            displayName: Seleccionar archivos a desplegar
+            inputs:
+              SourceFolder: $(rutaApp)
+              Contents: |
+                **
+                !.env
+                !**/*.sqlite3
+                !**/__pycache__/**
+                !tests_e2e/**
+                !requirements-dev.txt
+                !infra/**
+                !iniciar.*
+              TargetFolder: $(Build.ArtifactStagingDirectory)/app
+
+          - task: ArchiveFiles@2
+            displayName: Empaquetar .zip
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.ArtifactStagingDirectory)/monitoreo-$(Build.BuildId).zip
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publicar artefacto
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)/monitoreo-$(Build.BuildId).zip
+              artifact: app
+
+  # ---------------------------------------------------------------------------
+  - stage: Desplegar
+    displayName: Desplegar en Azure App Service
+    dependsOn: Validar
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: monitoreo-produccion
+    jobs:
+      - deployment: AppService
+        displayName: Producción
+        environment: produccion
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureAppServiceSettings@1
+                  displayName: Configurar variables de entorno (App Settings)
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    appName: $(webAppName)
+                    resourceGroupName: $(resourceGroup)
+                    appSettings: |
+                      [
+                        { "name": "DJANGO_SETTINGS_MODULE", "value": "config.settings.prod", "slotSetting": false },
+                        { "name": "DJANGO_SECRET_KEY", "value": "$(djangoSecretKey)", "slotSetting": false },
+                        { "name": "DJANGO_ALLOWED_HOSTS", "value": "$(djangoAllowedHosts)", "slotSetting": false },
+                        { "name": "DATABASE_URL", "value": "$(databaseUrl)", "slotSetting": false },
+                        { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "true", "slotSetting": false },
+                        { "name": "DISABLE_COLLECTSTATIC", "value": "true", "slotSetting": false }
+                      ]
+
+                - task: AzureWebApp@1
+                  displayName: Desplegar paquete
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    appType: webAppLinux
+                    appName: $(webAppName)
+                    package: $(Pipeline.Workspace)/app/monitoreo-$(Build.BuildId).zip
+                    runtimeStack: "PYTHON|3.11"
+                    startUpCommand: bash startup.sh
+
+                - script: |
+                    curl --fail --silent --show-error --retry 12 --retry-delay 15 --retry-all-errors \
+                      "https://$(webAppName).azurewebsites.net/salud/"
+                  displayName: Verificar sondeo de salud

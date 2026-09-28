@@ -1,0 +1,30 @@
+model Model
+	culture: es-CO
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: es-CO
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["Clientes","Casos","Facturacion","Prevencion","Calendario","Eje Periodo","Info Actualizacion","Seguridad Asignacion","RutaDatos"]
+
+ref table Clientes
+ref table Casos
+ref table Facturacion
+ref table Prevencion
+ref table Calendario
+ref table 'Eje Periodo'
+ref table 'Info Actualizacion'
+ref table 'Seguridad Asignacion'
+ref table _Medidas
+
+ref role Coordinador
+ref role Gerencia
+
+ref cultureInfo es-CO
+

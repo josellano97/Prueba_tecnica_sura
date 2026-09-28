@@ -1,0 +1,98 @@
+/// Calendario diario desde el 1 de enero de dos años antes de la fecha de corte hasta el fin del mes del corte.
+table Calendario
+	lineageTag: bb39d198-330b-5717-8798-6ae15e779a82
+	dataCategory: Time
+
+	column Fecha
+		dataType: dateTime
+		isKey
+		formatString: dd/mm/yyyy
+		lineageTag: 295d44aa-d501-5ac2-a164-1b7e8eea4528
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Año
+		dataType: int64
+		formatString: 0
+		lineageTag: 721835dc-4450-5d0f-8e11-954aa47b38ec
+		summarizeBy: none
+		sourceColumn: Año
+
+	column 'Mes número'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: dfad80cf-8304-501f-8fac-12e0cc0ada67
+		summarizeBy: none
+		sourceColumn: Mes número
+
+	column Mes
+		dataType: string
+		lineageTag: 3085bc12-1ddf-5cef-8aeb-8464df4b944b
+		summarizeBy: none
+		sourceColumn: Mes
+		sortByColumn: 'Mes número'
+
+	/// Mes y año, por ejemplo 'Sep 2026'.
+	column Periodo
+		dataType: string
+		lineageTag: 1b141300-4a7b-52a2-b36c-26935efdc393
+		summarizeBy: none
+		sourceColumn: Periodo
+		sortByColumn: 'Periodo orden'
+
+	column 'Periodo orden'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 00404de9-b56f-5c9f-bfc4-73b5fa57d335
+		summarizeBy: none
+		sourceColumn: Periodo orden
+
+	column 'Inicio mes'
+		dataType: dateTime
+		isHidden
+		formatString: dd/mm/yyyy
+		lineageTag: 8d111a56-ae0d-5aa6-b523-2e98732e728e
+		summarizeBy: none
+		sourceColumn: Inicio mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Trimestre
+		dataType: string
+		lineageTag: 5898b751-9c23-5b8a-a4ee-7efe844cb9eb
+		summarizeBy: none
+		sourceColumn: Trimestre
+
+	/// 'En curso' para el mes de la fecha de corte; 'Cerrado' para los demás.
+	column 'Estado del mes'
+		dataType: string
+		lineageTag: 5f3b88e5-d6f8-5ffe-94c3-cd1db34e174e
+		summarizeBy: none
+		sourceColumn: Estado del mes
+
+	partition Calendario = m
+		mode: import
+		source =
+				let
+				    Corte = Date.From(Text.Trim(Text.FromBinary(File.Contents(RutaDatos & "fecha_corte.txt")))),
+				    Inicio = #date(Date.Year(Corte) - 2, 1, 1),
+				    Fin = Date.EndOfMonth(Corte),
+				    Lista = List.Dates(Inicio, Duration.Days(Fin - Inicio) + 1, #duration(1, 0, 0, 0)),
+				    Tabla = Table.FromList(Lista, Splitter.SplitByNothing(), {"Fecha"}),
+				    TipoFecha = Table.TransformColumnTypes(Tabla, {{"Fecha", type date}}),
+				    Meses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"},
+				    Anio = Table.AddColumn(TipoFecha, "Año", each Date.Year([Fecha]), Int64.Type),
+				    MesNum = Table.AddColumn(Anio, "Mes número", each Date.Month([Fecha]), Int64.Type),
+				    Mes = Table.AddColumn(MesNum, "Mes", each Meses{[Mes número] - 1}, type text),
+				    Periodo = Table.AddColumn(Mes, "Periodo", each [Mes] & " " & Text.From([Año]), type text),
+				    Orden = Table.AddColumn(Periodo, "Periodo orden", each [Año] * 100 + [Mes número], Int64.Type),
+				    InicioMes = Table.AddColumn(Orden, "Inicio mes", each Date.StartOfMonth([Fecha]), type date),
+				    Trimestre = Table.AddColumn(InicioMes, "Trimestre", each "T" & Text.From(Date.QuarterOfYear([Fecha])), type text),
+				    EstadoMes = Table.AddColumn(Trimestre, "Estado del mes", each if [Inicio mes] = Date.StartOfMonth(Corte) then "En curso" else "Cerrado", type text)
+				in
+				    EstadoMes
+

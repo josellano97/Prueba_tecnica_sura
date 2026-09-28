@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load static %}
+{% block titulo %}Agente Sura{% endblock %}
+{% block encabezado %}Agente Sura{% endblock %}
+{% block subencabezado %}Pregúntele en lenguaje natural por la cartera o por un cliente{% endblock %}
+{% block asistente_flotante %}{% endblock %}
+{% block contenido %}
+<div class="asistente asistente-pagina" id="asistente" data-url="{{ asistente.url }}" data-autorizacion="{{ asistente.autorizacion }}">
+  <section class="asistente-panel" id="asistente-panel" aria-label="Chat con el Agente Sura">
+    {% include "partials/asistente_chat.html" %}
+  </section>
+</div>
+<script type="module" src="{% static 'js/asistente.js' %}"></script>
+{% endblock %}

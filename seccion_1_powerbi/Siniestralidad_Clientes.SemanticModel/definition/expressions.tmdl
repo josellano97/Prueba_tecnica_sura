@@ -1,0 +1,8 @@
+/// Carpeta donde están los CSV generados por datos/generar_datos.py (debe terminar en \).
+expression RutaDatos = "C:\Users\jose.llano\OneDrive - Grupo BIOS S.A.S\DATOS\TRABAJO\Prueba_tecnica_sura\datos\salida\" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: fa25fff5-d5c4-5573-9225-e4947e4e3af4
+
+	annotation PBI_ResultType = Text
+
+	annotation PBI_NavigationStepName = Navegación
+

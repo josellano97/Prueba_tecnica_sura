@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración{% endblock %}
+{% block encabezado %}Configuración del tablero{% endblock %}
+{% block subencabezado %}Parámetros de negocio que usan todos los indicadores{% endblock %}
+{% block contenido %}
+<section class="tarjeta formulario-tarjeta estrecha">
+  <form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    {% include "partials/errores_form.html" %}
+    <fieldset {% if not puede_editar %}disabled{% endif %}>
+      <legend>Clasificación de clientes por tasa de incidencia</legend>
+      {% for campo in form %}{% include "partials/campo.html" %}{% endfor %}
+    </fieldset>
+    {% if puede_editar %}
+    <div class="acciones-form"><button class="btn btn-primario" type="submit">Guardar configuración</button></div>
+    {% else %}
+    <p class="ayuda">Tiene permiso de consulta. Para modificar estos valores solicite el permiso «Cambiar umbrales y parámetros del tablero».</p>
+    {% endif %}
+  </form>
+  <p class="ayuda">Última actualización: {{ object.actualizado|date:"d/m/Y H:i" }}</p>
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% load analitica %}{% with k=c.kpi r=c.referencias %}
+<article class="tarjeta kpi-g estado-{{ c.juicio.estado }}">
+  <header>
+    <h3>{{ k.nombre }}</h3>
+    <span class="chip-estado">{{ c.juicio|estado_corto }}</span>
+  </header>
+  <div class="kpi-valor">{{ c|kpi_valor }}{% if k|kpi_unidad %} <small>{{ k|kpi_unidad }}</small>{% endif %}</div>
+  <div class="kpi-mini" title="Últimos 12 meses · línea punteada: promedio de los 12 meses previos">{% sparkline_kpi c %}</div>
+  <dl class="kpi-comparaciones">
+    <div><dt>vs {{ a.mes_anterior|fmes:1 }}</dt>
+      <dd class="{{ c|color_comp:'mes_anterior' }}">{% if r.mes_anterior.valor is None %}sin dato{% else %}{{ r.mes_anterior.variacion|flecha }} {{ r.mes_anterior.variacion|fvar }}{% endif %}</dd></div>
+    <div><dt>vs promedio 12 m <span class="tenue">({{ c|kpi_ref:"promedio_12m" }})</span></dt>
+      <dd class="{{ c|color_comp:'promedio_12m' }}">{% if r.promedio_12m.valor is None %}sin dato{% else %}{{ r.promedio_12m.variacion|flecha }} {{ r.promedio_12m.variacion|fvar }}{% endif %}</dd></div>
+  </dl>
+  <button type="button" class="kpi-abrir" data-dialogo="dlg-{{ k.clave }}" aria-haspopup="dialog">Ver tendencia y detalle</button>
+</article>
+
+<dialog id="dlg-{{ k.clave }}" class="dialogo-kpi estado-{{ c.juicio.estado }}" aria-labelledby="dlg-{{ k.clave }}-t">
+  <header class="dialogo-cab">
+    <div>
+      <h2 id="dlg-{{ k.clave }}-t">{{ k.nombre }}</h2>
+      <p class="sub">{{ f.mes|fmes|capfirst }} · {{ c.juicio.texto }}</p>
+    </div>
+    <button type="button" class="btn-cerrar" data-cerrar-dialogo aria-label="Cerrar">×</button>
+  </header>
+  <div class="dialogo-cuerpo">
+    <div class="dialogo-grafico">
+      <h3>Últimos 24 meses</h3>
+      <div class="grafico-kpi-desliza">{% grafico_kpi c 280 %}</div>
+      <div class="leyenda"><span><i class="muestra linea"></i>{{ k.nombre }}</span><span><i class="muestra punteada"></i>Promedio de los 12 meses previos</span><span class="tenue">Pase el mouse por un punto para ver su valor · en celular, deslice el gráfico</span></div>
+    </div>
+    <div class="dialogo-cifras">
+      <div class="kpi-valor grande">{{ c|kpi_valor }}{% if k|kpi_unidad %} <small>{{ k|kpi_unidad }}</small>{% endif %}</div>
+      <table class="tabla compacta">
+        <thead><tr><th>Comparado con</th><th class="num">Valor</th><th class="num">Variación</th></tr></thead>
+        <tbody>
+          <tr><td>Mes anterior ({{ a.mes_anterior|fmes:1 }})</td><td class="num">{{ c|kpi_ref:"mes_anterior" }}</td>
+            <td class="num {{ c|color_comp:'mes_anterior' }}">{{ r.mes_anterior.variacion|fvar }}</td></tr>
+          <tr><td>Mismo mes del año anterior ({{ a.mes_anio_anterior|fmes:1 }})</td><td class="num">{{ c|kpi_ref:"anio_anterior" }}</td>
+            <td class="num {{ c|color_comp:'anio_anterior' }}">{{ r.anio_anterior.variacion|fvar }}</td></tr>
+          <tr><td>Promedio de los 12 meses previos</td><td class="num">{{ c|kpi_ref:"promedio_12m" }}</td>
+            <td class="num {{ c|color_comp:'promedio_12m' }}">{{ r.promedio_12m.variacion|fvar }}</td></tr>
+          {% if c.ytd %}<tr><td>Año corrido {{ f.mes.year }} vs {{ f.mes.year|add:-1 }}</td>
+            <td class="num">{{ c.ytd.valor|kpi_fmt:k }} <span class="tenue">vs {{ c.ytd.anterior|kpi_fmt:k }}</span></td>
+            <td class="num">{{ c.ytd.variacion|fvar }}</td></tr>{% endif %}
+        </tbody>
+      </table>
+      <p class="ayuda">Tendencia de 12 meses: {% if c.tendencia.direccion == "sube" %}<b>creciente</b>{% elif c.tendencia.direccion == "baja" %}<b>decreciente</b>{% else %}sin una dirección clara{% endif %}.
+        El color solo aparece cuando la diferencia es estadísticamente significativa.</p>
+    </div>
+    <div class="dialogo-definicion">
+      <p><b>Qué significa:</b> {{ k.interpretacion }}</p>
+      <p><b>Cálculo:</b> {{ k.formula }}</p>
+      <p><b>Fuente:</b> {{ k.fuente }}</p>
+      <p><b>Limitaciones:</b> {{ k.limitaciones }}</p>
+    </div>
+  </div>
+</dialog>{% endwith %}

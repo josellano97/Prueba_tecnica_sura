@@ -1,0 +1,56 @@
+/// Hecho: actividades de prevención realizadas con cada cliente.
+table Prevencion
+	lineageTag: cab2808f-f52a-5654-8c38-bc8078a5ea4b
+
+	column 'ID actividad'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: eaaf0460-a73c-5dae-9f67-941adab0cf4b
+		summarizeBy: none
+		sourceColumn: ID actividad
+
+	column id_cliente
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6c30a7ac-8d2e-58d1-9b8d-05db2970813d
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+	column 'Fecha actividad'
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 055b571c-4e73-5976-9a99-f0322a6a1c6e
+		summarizeBy: none
+		sourceColumn: Fecha actividad
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Tipo de actividad'
+		dataType: string
+		lineageTag: 3c14bb99-dbf2-53fa-a7ca-a9903c854738
+		summarizeBy: none
+		sourceColumn: Tipo de actividad
+
+	column Participantes
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 5d88c2fe-9c68-5870-99e0-c8467afd00b7
+		summarizeBy: none
+		sourceColumn: Participantes
+
+	partition Prevencion = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(RutaDatos & "prevencion.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    // Cultura en-US: el CSV usa punto decimal y fechas ISO
+				    Tipos = Table.TransformColumnTypes(Encabezados, {{"id_actividad", Int64.Type}, {"id_cliente", Int64.Type}, {"fecha", type date}, {"tipo", type text}, {"participantes", Int64.Type}}, "en-US"),
+				    Paso = Tipos,
+				    Renombradas = Table.RenameColumns(Paso, {{"id_actividad", "ID actividad"}, {"fecha", "Fecha actividad"}, {"tipo", "Tipo de actividad"}, {"participantes", "Participantes"}})
+				in
+				    Renombradas
+

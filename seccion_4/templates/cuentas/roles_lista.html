@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Roles y permisos{% endblock %}
+{% block encabezado %}Roles y permisos{% endblock %}
+{% block subencabezado %}Cada rol agrupa permisos; a los usuarios se les asignan roles{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <div class="barra-herramientas">
+    <p class="ayuda">La aplicación verifica permisos en el servidor en cada página y petición de datos, no solo oculta botones.</p>
+    {% if puede_crear %}<a class="btn btn-primario" href="{% url 'cuentas:rol_crear' %}"><svg class="icono pequeno" aria-hidden="true"><use href="#i-mas"></use></svg>Nuevo rol</a>{% endif %}
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla matriz">
+      <thead>
+        <tr><th scope="col">Permiso</th>
+          {% for fila in matriz %}<th scope="col" class="centro">
+            {% if puede_editar %}<a href="{% url 'cuentas:rol_editar' fila.rol.pk %}" title="Editar rol">{{ fila.rol.name }}</a>{% else %}{{ fila.rol.name }}{% endif %}
+            <small>{{ fila.rol.n_usuarios }} usuario{{ fila.rol.n_usuarios|pluralize }}</small></th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for seccion in secciones %}
+        <tr class="fila-seccion"><th colspan="{{ matriz|length|add:1 }}" scope="rowgroup">{{ seccion.nombre }}</th></tr>
+          {% for p in seccion.permisos %}
+          <tr><th scope="row">{{ p.descripcion }}</th>
+            {% for fila in matriz %}<td class="centro">{% if p.codigo in fila.tiene %}<span class="marca-si" aria-label="Sí">✓</span>{% else %}<span class="marca-no" aria-label="No">—</span>{% endif %}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <ul class="descripcion-roles">
+    {% for fila in matriz %}{% if fila.descripcion %}<li><strong>{{ fila.rol.name }}:</strong> {{ fila.descripcion }}</li>{% endif %}{% endfor %}
+  </ul>
+</section>
+{% endblock %}

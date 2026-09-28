@@ -1,0 +1,30 @@
+/// Fecha de corte de los datos y momento de la última actualización del modelo.
+table 'Info Actualizacion'
+	isHidden
+	lineageTag: 304d1666-d224-5c45-8694-544326c030bf
+
+	column 'Fecha corte'
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 16ed6a70-af69-5817-887a-e345b74619bc
+		summarizeBy: none
+		sourceColumn: Fecha corte
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Fecha actualización'
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 17dbd32e-012b-5878-946f-1fa15eebfc9c
+		summarizeBy: none
+		sourceColumn: Fecha actualización
+
+	partition 'Info Actualizacion' = m
+		mode: import
+		source =
+				let
+				    Corte = Date.From(Text.Trim(Text.FromBinary(File.Contents(RutaDatos & "fecha_corte.txt")))),
+				    Tabla = #table(type table [#"Fecha corte" = date, #"Fecha actualización" = datetime], {{Corte, DateTime.LocalNow()}})
+				in
+				    Tabla
+

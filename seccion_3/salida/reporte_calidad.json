@@ -1,0 +1,118 @@
+{
+  "archivo": "facturacion_prueba.csv",
+  "sha256": "def93889b33a0b9fb9b975759d08e9afcc9395d98de0e92e82f2a20653813e41",
+  "fecha_ejecucion": "2026-09-27T13:45:57",
+  "fecha_referencia": "2026-09-27",
+  "total_registros": 1260,
+  "registros_validos": 970,
+  "registros_rechazados": 290,
+  "score_global": 0.7698,
+  "umbral_aprobacion": 0.9,
+  "estado_carga": "RECHAZADA",
+  "score_por_dimension": {
+    "Completitud": {
+      "registros_evaluados": 1260,
+      "cumplen": 1189,
+      "incumplen": 71,
+      "score": 0.9437
+    },
+    "Validez": {
+      "registros_evaluados": 1260,
+      "cumplen": 1181,
+      "incumplen": 79,
+      "score": 0.9373
+    },
+    "Unicidad": {
+      "registros_evaluados": 1209,
+      "cumplen": 1140,
+      "incumplen": 69,
+      "score": 0.9429
+    },
+    "Consistencia": {
+      "registros_evaluados": 1159,
+      "cumplen": 1137,
+      "incumplen": 22,
+      "score": 0.981
+    },
+    "Oportunidad": {
+      "registros_evaluados": 1236,
+      "cumplen": 1173,
+      "incumplen": 63,
+      "score": 0.949
+    }
+  },
+  "rechazados_por_regla": {
+    "COM_ID_NULO": {
+      "dimension": "Completitud",
+      "descripcion": "id_cliente vacío",
+      "registros": 12
+    },
+    "COM_PERIODO_NULO": {
+      "dimension": "Completitud",
+      "descripcion": "periodo vacío",
+      "registros": 12
+    },
+    "COM_TRABAJADORES_NULO": {
+      "dimension": "Completitud",
+      "descripcion": "trabajadores_activos vacío",
+      "registros": 24
+    },
+    "COM_VALOR_NULO": {
+      "dimension": "Completitud",
+      "descripcion": "valor_contrato vacío",
+      "registros": 26
+    },
+    "VAL_ID_FORMATO": {
+      "dimension": "Validez",
+      "descripcion": "id_cliente con formato no reconocible",
+      "registros": 15
+    },
+    "VAL_PERIODO_FORMATO": {
+      "dimension": "Validez",
+      "descripcion": "periodo con formato de fecha no reconocible o fecha inexistente",
+      "registros": 12
+    },
+    "VAL_TRABAJADORES_RANGO": {
+      "dimension": "Validez",
+      "descripcion": "trabajadores_activos no es entero entre 0 y 100,000",
+      "registros": 27
+    },
+    "VAL_VALOR_RANGO": {
+      "dimension": "Validez",
+      "descripcion": "valor_contrato no numérico, negativo o fuera de rango",
+      "registros": 26
+    },
+    "UNI_DUPLICADO_EXACTO": {
+      "dimension": "Unicidad",
+      "descripcion": "duplicado exacto de otro registro (se conserva solo el primero)",
+      "registros": 23
+    },
+    "UNI_DUPLICADO_CONFLICTO": {
+      "dimension": "Unicidad",
+      "descripcion": "mismo cliente + periodo con valores distintos (no se sabe cuál es el correcto)",
+      "registros": 46
+    },
+    "CON_TRABAJADORES_CERO": {
+      "dimension": "Consistencia",
+      "descripcion": "valor_contrato > 0 pero trabajadores_activos = 0",
+      "registros": 22
+    },
+    "OPO_PERIODO_FUTURO": {
+      "dimension": "Oportunidad",
+      "descripcion": "periodo posterior al mes de la carga",
+      "registros": 25
+    },
+    "OPO_ATRASO_MAYOR_60D": {
+      "dimension": "Oportunidad",
+      "descripcion": "el periodo cerró hace más de 60 días",
+      "registros": 38
+    }
+  },
+  "registros_con_advertencias": 410,
+  "notas": [
+    "Un registro puede incumplir varias reglas; por eso la suma por regla puede superar el total de rechazados.",
+    "El score de cada dimensión se calcula sobre los registros en que esa dimensión era evaluable (p. ej. la oportunidad solo se evalúa si el periodo es legible).",
+    "Oportunidad: días de atraso contados desde el fin de mes del periodo hasta la fecha de referencia; máximo 60 días.",
+    "Formatos dd/mm/aaaa se interpretan con el día primero (convención colombiana)."
+  ]
+}

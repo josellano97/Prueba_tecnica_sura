@@ -1,0 +1,44 @@
+/// Eje desconectado de meses: permite mostrar siempre los 12 meses que terminan en el mes de análisis, aunque el usuario filtre un periodo.
+table 'Eje Periodo'
+	lineageTag: f5f79208-9a62-566b-96bb-954a84c94722
+
+	column 'Inicio mes'
+		dataType: dateTime
+		isHidden
+		formatString: dd/mm/yyyy
+		lineageTag: 845a915d-b7bc-532f-8f8b-d8a05686b85a
+		summarizeBy: none
+		sourceColumn: Inicio mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Mes eje'
+		dataType: string
+		lineageTag: e1673dad-db8b-5cba-96d1-4dee3dbc2df9
+		summarizeBy: none
+		sourceColumn: Mes eje
+		sortByColumn: Orden
+
+	column Orden
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: f0fd33d7-b3e9-59db-8433-7fb1c9af4217
+		summarizeBy: none
+		sourceColumn: Orden
+
+	partition 'Eje Periodo' = m
+		mode: import
+		source =
+				let
+				    Corte = Date.From(Text.Trim(Text.FromBinary(File.Contents(RutaDatos & "fecha_corte.txt")))),
+				    Meses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"},
+				    Numero = List.Numbers(0, 24 + Date.Month(Corte)),
+				    Inicios = List.Transform(Numero, each Date.AddMonths(#date(Date.Year(Corte) - 2, 1, 1), _)),
+				    Tabla = Table.FromList(Inicios, Splitter.SplitByNothing(), {"Inicio mes"}),
+				    Tipo = Table.TransformColumnTypes(Tabla, {{"Inicio mes", type date}}),
+				    Etiqueta = Table.AddColumn(Tipo, "Mes eje", each Meses{Date.Month([Inicio mes]) - 1} & " " & Text.End(Text.From(Date.Year([Inicio mes])), 2), type text),
+				    Orden = Table.AddColumn(Etiqueta, "Orden", each Date.Year([Inicio mes]) * 100 + Date.Month([Inicio mes]), Int64.Type)
+				in
+				    Orden
+

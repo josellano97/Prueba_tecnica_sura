@@ -1,0 +1,90 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Monitoreo{% endblock %} · Monitoreo de siniestralidad</title>
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static "css/analisis.css" %}">
+  <script type="module" src="{% static 'js/app.js' %}"></script>
+  {% block cabecera %}{% endblock %}
+</head>
+<body class="{% block clase_body %}app{% endblock %}">
+{% include "partials/iconos.html" %}
+{% block cuerpo %}
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div class="layout">
+  <aside class="lateral" id="lateral" aria-label="Navegación principal">
+    <div class="lateral-marca">
+      <img src="{% static 'img/logo_sura.png' %}" alt="Grupo SURA" class="logo">
+      <span class="lateral-producto">Monitoreo de siniestralidad</span>
+    </div>
+    <nav class="lateral-nav">
+      <ul>
+        {% for item in menu_items %}
+        <li><a href="{{ item.url }}" class="{% if item.activo %}activo{% endif %}" {% if item.activo %}aria-current="page"{% endif %}>
+          <svg class="icono" aria-hidden="true"><use href="#i-{{ item.icono }}"></use></svg>{{ item.etiqueta }}</a></li>
+        {% endfor %}
+        {% if perms.tablero.view_configuraciontablero %}
+        <li><a href="{% url 'tablero:configuracion' %}" class="{% if request.resolver_match.url_name == 'configuracion' %}activo{% endif %}">
+          <svg class="icono" aria-hidden="true"><use href="#i-ajustes"></use></svg>Configuración</a></li>
+        {% endif %}
+        {% if puede_admin %}
+        <li class="separador"><a href="{% url 'admin:index' %}"><svg class="icono" aria-hidden="true"><use href="#i-admin"></use></svg>Administración Django</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    <div class="lateral-pie">
+      <div class="avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</div>
+      <div class="lateral-usuario">
+        <strong>{{ user.get_full_name|default:user.username }}</strong>
+        <span>{{ roles_usuario }}</span>
+      </div>
+    </div>
+  </aside>
+  <div class="velo" data-cerrar-lateral hidden></div>
+
+  <div class="principal">
+    <header class="superior">
+      <button class="btn-icono solo-movil" type="button" data-abrir-lateral aria-controls="lateral" aria-expanded="false" aria-label="Abrir menú">
+        <svg class="icono" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+      <div class="superior-titulo">
+        <h1>{% block encabezado %}{% endblock %}</h1>
+        <p class="superior-sub">{% block subencabezado %}{% endblock %}</p>
+      </div>
+      <div class="superior-acciones">
+        <button class="btn-icono" type="button" data-tema title="Cambiar tema claro / oscuro" aria-label="Cambiar tema claro u oscuro">
+          <svg class="icono" aria-hidden="true"><use href="#i-tema"></use></svg>
+        </button>
+        <div class="menu-usuario">
+          <button class="btn-usuario" type="button" data-menu-usuario aria-haspopup="true" aria-expanded="false">
+            <span class="avatar pequeno" aria-hidden="true">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</span>
+            <span class="oculto-movil">{{ user.username }}</span>
+            <svg class="icono pequeno" aria-hidden="true"><use href="#i-abajo"></use></svg>
+          </button>
+          <div class="menu-desplegable" role="menu" hidden>
+            <div class="menu-cabecera"><strong>{{ user.get_full_name|default:user.username }}</strong><span>{{ user.email }}</span></div>
+            <a role="menuitem" href="{% url 'cuentas:cambio_contrasena' %}"><svg class="icono pequeno" aria-hidden="true"><use href="#i-llave"></use></svg>Cambiar contraseña</a>
+            <form method="post" action="{% url 'cuentas:logout' %}">{% csrf_token %}
+              <button role="menuitem" type="submit"><svg class="icono pequeno" aria-hidden="true"><use href="#i-salir"></use></svg>Cerrar sesión</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="contenido" class="contenido" tabindex="-1">
+      {% include "partials/mensajes.html" %}
+      {% block contenido %}{% endblock %}
+    </main>
+    <footer class="pie">{% with c=carga_datos %}{% if c %}{% if c.fuente == "demo" %}Datos de demostración generados por código{% else %}{{ c.descripcion }}{% endif %} · corte {{ c.fecha_corte|date:"d/m/Y" }}{% else %}Sin datos cargados{% endif %}{% endwith %}</footer>
+  </div>
+</div>
+{% endblock %}
+{% block asistente_flotante %}{% if asistente %}{% include "partials/asistente.html" %}
+<script type="module" src="{% static 'js/asistente.js' %}"></script>{% endif %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

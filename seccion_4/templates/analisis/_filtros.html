@@ -1,0 +1,29 @@
+{% load analitica %}
+<nav class="subnav" aria-label="Secciones del análisis">
+  <a href="{% url 'analisis:resumen' %}?{{ qs }}" class="{% if request.resolver_match.url_name == 'resumen' %}activo{% endif %}">Resumen gerencial</a>
+  <a href="{% url 'analisis:diagnostico' %}?{{ qs }}" class="{% if request.resolver_match.url_name == 'diagnostico' %}activo{% endif %}">Diagnóstico (drill-down)</a>
+  <a href="{% url 'analisis:metodologia' %}" class="{% if request.resolver_match.url_name == 'metodologia' %}activo{% endif %}">Metodología y KPIs</a>
+  {% if perms.tablero.ver_calidad_datos %}<a href="{% url 'analisis:calidad' %}">Calidad de datos</a>{% endif %}
+</nav>
+<form method="get" class="tarjeta filtros filtros-analisis" aria-label="Filtros del análisis">
+  <button type="button" class="btn-filtros-movil" data-plegar-filtros aria-expanded="false">
+    <span><b>Filtros</b> · {{ f.mes|fmes|capfirst }}{% if f.coordinador_id or f.sector_id or f.clases|length < 5 %} · con filtros{% else %} · sin filtros{% endif %}</span>
+    <span class="flecha-plegar" aria-hidden="true">▾</span>
+  </button>
+  {% if dim %}<input type="hidden" name="dim" value="{{ dim }}">{% endif %}
+  {% for k, v in persistir %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <div class="filtros-campos">
+    <div class="campo"><label for="a-mes">Mes analizado</label>
+      <select id="a-mes" name="mes">{% for v, e in periodos %}<option value="{{ v }}" {% if v == f.mes|date:'Y-m' %}selected{% endif %}>{{ e|capfirst }}</option>{% endfor %}</select></div>
+    {% if coordinadores|length > 1 %}
+    <div class="campo"><label for="a-coord">Coordinador</label>
+      <select id="a-coord" name="coordinador"><option value="">Todos</option>{% for c in coordinadores %}<option value="{{ c.id }}" {% if c.id == f.coordinador_id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div class="campo"><label for="a-sector">Sector</label>
+      <select id="a-sector" name="sector"><option value="">Todos</option>{% for s in sectores %}<option value="{{ s.id }}" {% if s.id == f.sector_id %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
+    <fieldset class="campo"><legend class="etiqueta">Clase de riesgo</legend>
+      <div class="chips-casilla">{% for c in clases %}<label class="chip-casilla"><input type="checkbox" name="clase" value="{{ c }}" {% if c in f.clases %}checked{% endif %}><span>{{ c }}</span></label>{% endfor %}</div></fieldset>
+    <div class="campo campo-accion"><button class="btn btn-primario" type="submit">Aplicar</button></div>
+    <div class="campo campo-accion"><a class="btn btn-texto" href="?">Limpiar</a></div>
+  </div>
+</form>

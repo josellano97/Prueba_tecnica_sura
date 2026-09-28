@@ -1,0 +1,15 @@
+# Secretos y datos locales
+.env
+*.sqlite3
+db.sqlite3-journal
+
+# Entornos y cachés de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Artefactos generados
+staticfiles/
+capturas_e2e/
+*.log

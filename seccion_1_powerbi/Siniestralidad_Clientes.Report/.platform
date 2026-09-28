@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Siniestralidad_Clientes"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "24db1804-1c58-4948-9c64-e9bb7e27e31e"
+  }
+}

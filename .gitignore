@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+datos/salida/
+.env
+*.sqlite3
+staticfiles/
+*.log
+~$*

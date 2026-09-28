@@ -1,0 +1,80 @@
+{% extends "base.html" %}{% load analitica %}
+{% block titulo %}Diagnóstico{% endblock %}
+{% block encabezado %}Diagnóstico{% endblock %}
+{% block subencabezado %}¿Dónde exactamente está ocurriendo? Del total al caso individual{% endblock %}
+{% block contenido %}
+{% if sin_datos %}<section class="tarjeta estado-vacio"><h2>No hay datos cargados</h2></section>{% else %}
+{% include "analisis/_filtros.html" %}
+<section class="tarjeta">
+  <nav class="miga" aria-label="Ruta del diagnóstico">
+    {% for m in miga %}{% if m.url and not forloop.last %}<a href="{{ m.url }}">{{ m.texto }}</a><span aria-hidden="true">›</span>{% else %}<span aria-current="page">{{ m.texto }}</span>{% endif %}{% endfor %}
+  </nav>
+  {% if nivel != "cliente" %}
+  <div class="barra-herramientas">
+    <div class="segmentado" role="group" aria-label="Analizar por">
+      {% for d, nombre in dimensiones %}<a class="seg-enlace" href="?{{ qs }}&amp;dim={{ d }}" aria-pressed="{% if d == dim %}true{% else %}false{% endif %}">{{ nombre }}</a>{% endfor %}
+    </div>
+    <p class="ayuda">{{ f.mes|fmes }} · ordenado por casos por encima de lo esperable. <b>Esperables</b> = trabajadores del mes × tasa de sus 12 meses previos{% if nivel == "clientes" %} (ajustada hacia su clase de riesgo para clientes pequeños){% endif %}.</p>
+  </div>
+  <div class="tabla-contenedor">
+  <table class="tabla diagnostico">
+    <thead><tr>
+      <th>{% if nivel == "clientes" %}Cliente{% else %}{{ nombre_dim }}{% endif %}</th>
+      <th class="num">Casos</th><th class="num">Esperables</th><th class="num">Diferencia</th><th>¿Significativo?</th>
+      <th class="num">Tasa</th><th class="num">Tasa ref.</th><th class="num">vs mes ant.</th><th class="num" title="Participación de su cambio en la suma de todos los cambios (positivos y negativos)">% del movimiento</th>
+      <th class="num">Costo</th><th class="num">% graves</th>{% if nivel == "clientes" %}<th>Estado</th>{% else %}<th class="num">Clientes</th>{% endif %}<th>12 meses</th>
+    </tr></thead>
+    <tbody>
+    {% for r in filas %}
+      <tr class="{% if r.direccion == 'arriba' and r.significancia in 'muy_alta alta' %}resaltada{% endif %}">
+        <td><a href="{{ base_url }}{{ r.id }}">{{ r.nombre }}</a>{% if nivel == "clientes" %}<small class="tenue bloque">{{ r.trab|fnum }} trabajadores</small>{% endif %}</td>
+        <td class="num"><b>{{ r.casos }}</b></td>
+        <td class="num">{{ r.esperado|fnum:1 }}</td>
+        <td class="num {% if r.exceso > 0 %}peor{% elif r.exceso < 0 %}mejor{% endif %}">{{ r.exceso|fdelta:1 }}</td>
+        <td>{% if r.significancia == "muy_alta" or r.significancia == "alta" %}<span class="sig {% if r.direccion == 'arriba' %}peor{% else %}mejor{% endif %}">Sí{% if r.direccion == 'arriba' %}, por encima{% else %}, por debajo{% endif %}</span>{% elif r.significancia == "moderada" %}<span class="sig tenue">Indicio</span>{% elif r.significancia == "sin_prueba" %}<span class="tenue">Sin historial</span>{% else %}<span class="tenue">No</span>{% endif %}</td>
+        <td class="num">{{ r.tasa|fnum:2 }}</td>
+        <td class="num">{{ r.tasa_ref|fnum:2 }}</td>
+        <td class="num">{% if r.casos_ant is None %}–{% else %}{{ r.delta|fdelta }}{% endif %}</td>
+        <td class="num">{{ r.contrib|fpct:0 }}</td>
+        <td class="num">{{ r.costo|fcop }}</td>
+        <td class="num">{{ r.pct_graves|fpct:0 }}</td>
+        {% if nivel == "clientes" %}<td><span class="semaforo {{ r.estado }}"><i></i>{{ r.estado|capfirst }}</span></td>{% else %}<td class="num">{{ r.clientes }}</td>{% endif %}
+        <td class="tendencia-celda">{% sparkline r.serie 90 24 %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="13" class="vacio">Sin datos para esta selección.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">"Sí" = probabilidad de que la diferencia sea azar menor al 1 % (prueba de Poisson). "Indicio" = entre 1 % y 5 %. Haga clic en un nombre para bajar un nivel.</p>
+  {% else %}
+  {% with p=perfil i=perfil.info %}
+  <div class="perfil-cliente">
+    <div><h2>{{ i.nombre }}</h2><p class="sub">{{ i.sector }} · clase de riesgo {{ i.clase }} · {{ i.coordinador }} · {{ i.regional }}{% if not i.activo %} · <b>cliente inactivo</b>{% endif %}</p></div>
+    <div class="rejilla-3 compacta">
+      <div><span class="etiqueta">Casos 12 meses</span><strong>{{ p.resumen.casos_12m|fnum }}</strong></div>
+      <div><span class="etiqueta">Tasa 12 meses</span><strong>{{ p.resumen.tasa_12m|fnum:2 }}</strong></div>
+      <div><span class="etiqueta">Meses críticos (12 m)</span><strong>{{ p.resumen.meses_criticos_12m }}</strong></div>
+      <div><span class="etiqueta">Costo 12 meses</span><strong>{{ p.resumen.costo_12m|fcop }}</strong></div>
+      {% if p.resumen.prev_12m is not None %}<div><span class="etiqueta">Actividades de prevención (12 m)</span><strong>{{ p.resumen.prev_12m }}</strong></div>{% endif %}
+    </div>
+  </div>
+  <h3>Evolución mensual (24 meses)</h3>
+  <div class="tabla-contenedor"><table class="tabla">
+    <thead><tr><th>Mes</th><th class="num">Trabajadores</th><th class="num">Casos</th><th class="num">Graves</th><th class="num">Tasa</th><th>Estado</th><th class="num">Costo</th>{% if "dias" in cubo.variables %}<th class="num">Días ausencia</th>{% endif %}{% if "prevencion" in cubo.variables %}<th class="num">Prevención</th>{% endif %}</tr></thead>
+    <tbody>{% for m in p.meses reversed %}{% if m.sin_datos %}<tr><td>{{ m.periodo|fmes:1 }}</td><td colspan="8" class="tenue">Sin facturación ese mes</td></tr>{% else %}
+      <tr class="{% if m.periodo == f.mes %}resaltada{% endif %}"><td>{{ m.periodo|fmes:1 }}</td><td class="num">{{ m.trab|fnum }}</td><td class="num">{{ m.casos }}</td><td class="num">{{ m.graves }}</td><td class="num">{{ m.tasa|fnum:2 }}</td>
+      <td><span class="semaforo {{ m.estado }}"><i></i>{{ m.estado|capfirst }}</span></td><td class="num">{{ m.costo|fcop }}</td>
+      {% if "dias" in cubo.variables %}<td class="num">{{ m.dias }}</td>{% endif %}{% if "prevencion" in cubo.variables %}<td class="num">{{ m.prev }}</td>{% endif %}</tr>{% endif %}{% endfor %}</tbody>
+  </table></div>
+  <h3>Casos de {{ f.mes|fmes }}</h3>
+  {% if p.casos_mes %}
+  <div class="tabla-contenedor"><table class="tabla">
+    <thead><tr><th>ID caso</th><th>Fecha</th><th>Tipo</th><th class="num">Días de ausencia</th><th class="num">Costo</th><th>Estado</th></tr></thead>
+    <tbody>{% for c in p.casos_mes %}<tr class="{% if c.estado == 'anulado' %}inactivo{% endif %}"><td>{{ c.id_origen }}</td><td>{{ c.fecha|date:"d/m/Y" }}</td><td>{{ c.tipo|capfirst }}</td><td class="num">{{ c.dias_ausencia }}</td><td class="num">{{ c.costo|fcop }}</td><td>{{ c.estado|capfirst }}{% if c.estado == 'anulado' %} <small>(no cuenta)</small>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% elif "detalle_casos" in cubo.carga.variables %}<p class="tenue">Sin casos registrados en el mes.</p>
+  {% else %}<p class="tenue">La fuente actual no incluye el detalle de cada caso.</p>{% endif %}
+  {% endwith %}
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

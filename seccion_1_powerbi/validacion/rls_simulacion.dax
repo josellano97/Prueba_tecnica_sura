@@ -1,0 +1,4 @@
+-- ### sim03
+EVALUATE CALCULATETABLE ( ROW ( "clientes", COUNTROWS ( Clientes ), "casos", [Total casos], "coord", CONCATENATEX ( VALUES ( Clientes[Coordinador] ), Clientes[Coordinador] ) ), FILTER ( ALL ( Clientes ), Clientes[id_cliente] IN CALCULATETABLE ( VALUES ( 'Seguridad Asignacion'[id_cliente] ), 'Seguridad Asignacion'[Correo] = LOWER ( "Coordinador03@empresa-ejemplo.co" ) ) ) )
+-- ### sim07
+EVALUATE CALCULATETABLE ( ROW ( "clientes", COUNTROWS ( Clientes ), "casos", [Total casos], "coord", CONCATENATEX ( VALUES ( Clientes[Coordinador] ), Clientes[Coordinador] ) ), FILTER ( ALL ( Clientes ), Clientes[id_cliente] IN CALCULATETABLE ( VALUES ( 'Seguridad Asignacion'[id_cliente] ), 'Seguridad Asignacion'[Correo] = LOWER ( "coordinador07@empresa-ejemplo.co" ) ) ) )

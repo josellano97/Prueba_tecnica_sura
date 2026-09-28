@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block encabezado %}Usuarios{% endblock %}
+{% block subencabezado %}{{ totales.activos }} activos de {{ totales.todos }} · cree cuentas, asigne roles y controle quién puede ingresar{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <div class="barra-herramientas">
+    <form method="get" class="filtros-lista" role="search">
+      <div class="campo campo-buscar">
+        <label for="q" class="sr">Buscar</label>
+        <svg class="icono pequeno" aria-hidden="true"><use href="#i-buscar"></use></svg>
+        <input type="search" id="q" name="q" value="{{ filtros.q }}" placeholder="Buscar por nombre, usuario o correo">
+      </div>
+      <div class="campo">
+        <label for="estado" class="sr">Estado</label>
+        <select id="estado" name="estado">
+          <option value="">Todos los estados</option>
+          <option value="activos" {% if filtros.estado == "activos" %}selected{% endif %}>Activos</option>
+          <option value="inactivos" {% if filtros.estado == "inactivos" %}selected{% endif %}>Inactivos</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="rol" class="sr">Rol</label>
+        <select id="rol" name="rol">
+          <option value="">Todos los roles</option>
+          {% for r in roles %}<option value="{{ r.id }}" {% if filtros.rol == r.id|stringformat:"s" %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn" type="submit">Filtrar</button>
+      {% if filtros.q or filtros.estado or filtros.rol %}<a class="btn btn-texto" href="{% url 'cuentas:usuarios' %}">Limpiar</a>{% endif %}
+    </form>
+    {% if puede_crear %}
+    <a class="btn btn-primario" href="{% url 'cuentas:usuario_crear' %}"><svg class="icono pequeno" aria-hidden="true"><use href="#i-mas"></use></svg>Nuevo usuario</a>
+    {% endif %}
+  </div>
+
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead><tr><th>Usuario</th><th>Roles</th><th>Alcance</th><th>Último ingreso</th><th>Estado</th>{% if puede_editar %}<th class="derecha">Acciones</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for u in usuarios %}
+        <tr class="{% if not u.is_active %}inactivo{% endif %}">
+          <td class="celda-usuario">
+            <span class="avatar pequeno" aria-hidden="true">{{ u.get_full_name|default:u.username|slice:":1"|upper }}</span>
+            <div><strong>{{ u.get_full_name|default:u.username }}</strong><small>{{ u.username }} · {{ u.email|default:"sin correo" }}</small></div>
+          </td>
+          <td>{% for g in u.groups.all %}<span class="etiqueta-rol">{{ g.name }}</span>{% empty %}{% if u.is_superuser %}<span class="etiqueta-rol super">Superusuario</span>{% else %}<span class="tenue">Sin rol</span>{% endif %}{% endfor %}</td>
+          <td>{% if u.perfil.coordinador %}{{ u.perfil.coordinador }}{% else %}<span class="tenue">—</span>{% endif %}</td>
+          <td>{% if u.last_login %}<time datetime="{{ u.last_login|date:'c' }}">{{ u.last_login|date:"d/m/Y H:i" }}</time>{% else %}<span class="tenue">Nunca</span>{% endif %}</td>
+          <td>{% if u.is_active %}<span class="estado estado-ok">● Activo</span>{% else %}<span class="estado estado-inactivo">○ Inactivo</span>{% endif %}</td>
+          {% if puede_editar %}
+          <td class="derecha acciones-fila">
+            <a class="btn btn-pequeno" href="{% url 'cuentas:usuario_editar' u.pk %}"><svg class="icono pequeno" aria-hidden="true"><use href="#i-lapiz"></use></svg>Editar</a>
+            {% if u.pk != user.pk %}
+            <form method="post" action="{% url 'cuentas:usuario_estado' u.pk %}" data-confirmar="{% if u.is_active %}¿Desactivar a {{ u.username }}? No podrá iniciar sesión.{% else %}¿Activar a {{ u.username }}?{% endif %}">
+              {% csrf_token %}<input type="hidden" name="siguiente" value="{{ request.get_full_path }}">
+              <button class="btn btn-pequeno {% if u.is_active %}btn-peligro{% endif %}" type="submit">{% if u.is_active %}Desactivar{% else %}Activar{% endif %}</button>
+            </form>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="vacio">No hay usuarios que coincidan con los filtros.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/paginacion.html" %}
+</section>
+{% endblock %}

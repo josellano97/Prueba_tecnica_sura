@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Metodología y KPIs{% endblock %}
+{% block encabezado %}Metodología y diccionario de indicadores{% endblock %}
+{% block subencabezado %}Qué significa cada número, cómo se calcula y qué no se puede calcular todavía{% endblock %}
+{% block contenido %}
+<nav class="subnav" aria-label="Secciones del análisis">
+  <a href="{% url 'analisis:resumen' %}">Resumen gerencial</a><a href="{% url 'analisis:diagnostico' %}">Diagnóstico (drill-down)</a>
+  <a href="{% url 'analisis:metodologia' %}" class="activo">Metodología y KPIs</a>
+  {% if perms.tablero.ver_calidad_datos %}<a href="{% url 'analisis:calidad' %}">Calidad de datos</a>{% endif %}
+</nav>
+<section class="tarjeta">
+  <h2>Cómo leer el análisis</h2>
+  <ul class="lista-metodo">
+    <li><b>Granularidad mensual.</b> La exposición (trabajadores activos) se factura por mes: una tasa diaria o semanal no tendría denominador y sería ruido (≈ 10 casos por día en toda la cartera). El mes en curso se excluye hasta cerrarse.</li>
+    <li><b>Sin metas.</b> Los datos no traen metas ni presupuesto; por eso no se muestra "cumplimiento". Cada indicador se compara con su mes anterior, con el mismo mes del año anterior (controla la estacionalidad) y con sus 12 meses previos.</li>
+    <li><b>Regla oficial.</b> Crítico si la tasa del mes es mayor a {{ cfg.umbral_critico|floatformat:"-2" }}; moderado desde {{ cfg.umbral_moderado|floatformat:"-2" }} (pregunta 2.3 de la prueba, configurable).</li>
+    <li><b>¿Es significativo?</b> Para casos y tasa se usa una prueba de Poisson: se calculan los casos esperables con la exposición actual y la tasa de referencia, y se reporta como significativo solo si la probabilidad de observar esa diferencia por azar es menor al 1 % (alertas) o al 5 % (lectura del KPI). Para los demás indicadores se destaca un valor solo si se aleja más de 2 desviaciones estándar de su variación de los 12 meses previos.</li>
+    <li><b>Comparaciones múltiples.</b> Se evalúan unos 100 clientes por mes: al 1 % de significancia se espera, por puro azar, cerca de un falso positivo mensual. Por eso una alerta de cliente individual es de prioridad media salvo que su probabilidad sea menor a 0,1 %, y se recomienda confirmarla con el coordinador antes de actuar.</li>
+    <li><b>Tendencia.</b> Regresión lineal de los últimos 12 meses; se afirma "creciente" o "decreciente" solo si la pendiente es claramente distinta de cero (|t| ≥ 2).</li>
+    <li><b>Descomposiciones exactas.</b> Casos = exposición × tasa; tasa = mezcla de clases + cambio dentro de clases; costo = casos × costo por caso. Los efectos suman la variación total.</li>
+    <li><b>Clientes pequeños.</b> Su tasa de referencia se ajusta hacia la de su clase de riesgo (300 trabajadores-mes), como en la consulta SQL 2.2, para que un solo caso no dispare una alerta.</li>
+    <li><b>Hechos vs hipótesis.</b> El texto generado distingue lo observado de las posibles explicaciones. Una asociación (p. ej. prevención y tasa) no prueba causalidad.</li>
+    <li><b>Misma fuente que el SQL y el Power BI.</b> Los casos del mes, la tasa y la clasificación coinciden con el pipeline SQL (Sección 2.3) y con el modelo semántico (Sección 1).</li>
+  </ul>
+</section>
+<section class="tarjeta">
+  <h2>Diccionario de indicadores</h2>
+  <div class="tabla-contenedor"><table class="tabla diccionario">
+    <thead><tr><th>Nivel</th><th>Indicador</th><th>Fórmula</th><th>Fuente</th><th>Interpretación</th><th>Mejor si…</th><th>Limitaciones</th><th>Disponible</th></tr></thead>
+    <tbody>{% for x in catalogo %}{% with k=x.kpi %}
+      <tr><td>{% if k.nivel == 1 %}1 · ejecutivo{% else %}2 · explicativo{% endif %}</td><td><b>{{ k.nombre }}</b><small class="tenue bloque">{{ k.unidad }}</small></td>
+        <td>{{ k.formula }}</td><td>{{ k.fuente }}</td><td>{{ k.interpretacion }}</td>
+        <td>{% if k.sentido == "baja" %}baja{% elif k.sentido == "sube" %}sube{% else %}descriptivo{% endif %}</td><td>{{ k.limitaciones }}</td>
+        <td>{% if x.disponible %}Sí{% else %}<span class="tenue">No (falta en la fuente)</span>{% endif %}</td></tr>{% endwith %}{% endfor %}
+    </tbody></table></div>
+  <p class="ayuda">Nivel 3 (diagnóstico): los mismos indicadores abiertos por sector, clase de riesgo, regional, coordinador, cliente, mes y caso, en la página de diagnóstico.</p>
+</section>
+<section class="tarjeta" id="faltantes">
+  <h2>Oportunidades de mejora · información faltante</h2>
+  <p class="ayuda">Indicadores que serían muy útiles para gerencia pero que hoy no se pueden construir sin inventar datos.</p>
+  <div class="tabla-contenedor"><table class="tabla">
+    <thead><tr><th>Indicador</th><th>Pregunta que respondería</th><th>Dato que falta</th><th>Qué se hace hoy</th></tr></thead>
+    <tbody>{% for o in faltantes %}<tr><td><b>{{ o.indicador }}</b></td><td>{{ o.pregunta }}</td><td>{{ o.falta }}</td><td>{{ o.hoy }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

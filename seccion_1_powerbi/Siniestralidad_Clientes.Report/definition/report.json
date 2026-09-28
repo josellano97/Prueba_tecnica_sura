@@ -1,0 +1,108 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.3.0/schema.json",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY23SU04",
+      "reportVersionAtImport": {
+        "visual": "1.8.80",
+        "report": "2.0.80",
+        "page": "1.3.80"
+      },
+      "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "TemaSURA.json",
+      "reportVersionAtImport": {
+        "visual": "2.9.0",
+        "report": "3.3.0",
+        "page": "2.3.1"
+      },
+      "type": "RegisteredResources"
+    }
+  },
+  "objects": {
+    "section": [
+      {
+        "properties": {
+          "verticalAlignment": {
+            "expr": {
+              "Literal": {
+                "Value": "'Top'"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "resourcePackages": [
+    {
+      "name": "SharedResources",
+      "type": "SharedResources",
+      "items": [
+        {
+          "name": "CY23SU04",
+          "path": "BaseThemes/CY23SU04.json",
+          "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "TemaSURA.json",
+          "path": "TemaSURA.json",
+          "type": "CustomTheme"
+        },
+        {
+          "name": "fondo_p1.jpg",
+          "path": "fondo_p1.jpg",
+          "type": "Image"
+        },
+        {
+          "name": "fondo_p2.jpg",
+          "path": "fondo_p2.jpg",
+          "type": "Image"
+        },
+        {
+          "name": "fondo_p3.jpg",
+          "path": "fondo_p3.jpg",
+          "type": "Image"
+        },
+        {
+          "name": "fondo_panel.jpg",
+          "path": "fondo_panel.jpg",
+          "type": "Image"
+        },
+        {
+          "name": "fondo_inicio.jpg",
+          "path": "fondo_inicio.jpg",
+          "type": "Image"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "allowChangeFilterTypes": true,
+    "useEnhancedTooltips": true,
+    "useDefaultAggregateDisplayName": true
+  }
+}
